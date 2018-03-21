@@ -1,0 +1,43 @@
+/* styles */
+/* called by your view template */
+
+/* You might want to try something fancier: */
+/* less: http://lesscss.org/ */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: Garamond, Times New Roman, serif;
+  margin: 25px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.wrapper {
+  width: 50%;
+  
+
+}
+
+h1 {
+  font-weight: bold;
+  color: pink;
+}
+
+.bold {
+  font-weight: bold;
+}
+
+p {
+  max-width: 600px;
+}
+
+
+footer > a {
+  color: #BBBBBB;
+}
+
+
