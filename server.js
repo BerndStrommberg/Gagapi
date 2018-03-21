@@ -47,8 +47,18 @@ const gags = [
 app.get("/api", (request, response) => {
   let urlSended = url.parse(request.url, true)
   let query = urlSended.query
-  console.log(query.searchType)
-  response.send("Noch nichts in der DB <a href=/>Zurück zur Startseite</a>")
+  
+  if(query.searchType == "random") {
+    console.log(Math.floor(Math.random()*(gags.length-1)))
+      response.send(gags[Math.floor(Math.random()*(gags.length-1))])
+  } else {
+    response.send("Sorry so weit sind wir leider noch nicht")
+  }
+  
+                
+  
+  
+                  
 })
 
 // could also use the POST body instead of query string: http://expressjs.com/en/api.html#req.body

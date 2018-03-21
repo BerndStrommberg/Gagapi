@@ -23,8 +23,18 @@ body {
 }
 
 h1 {
+  font-family: Helvetica, Sans-serif;
   font-weight: bold;
-  color: pink;
+  color: #f4dc42;
+}
+
+
+h2 {
+  color: #515150;
+}
+
+h3 {
+  color: #515150;
 }
 
 .bold {
