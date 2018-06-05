@@ -6,49 +6,35 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.widget.TextView;
 
-import java.sql.Time;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-
 public class MainActivity extends AppCompatActivity {
 
+    String FloatFormatString = "%.4f";
     private SensorManager mSensorManager;
-    private Sensor mSensor;
-    private SensorEventListener sensorEventListener;
+    private Sensor sensorRotation, sensorAcceleration, sensorGravity;
+    private SensorEventListener rotationListener, accelerationListener, gravityListener;
 
-    private StringBuilder stringBuilder = new StringBuilder();
-    private TextView output;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        InitalizeSensorListeners();
+    }
+
+    void InitalizeSensorListeners()
+    {
         mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
-        mSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR);
+        sensorRotation = mSensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR);
+        sensorAcceleration = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        sensorGravity = mSensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY);
+        rotationListener = new SensorEventListener() {
 
-        output = (TextView) findViewById(R.id.output);
-
-        sensorEventListener = new SensorEventListener() {
             @Override
             public void onSensorChanged(SensorEvent sensorEvent) {
-                stringBuilder.delete(0, stringBuilder.length());
-
-                stringBuilder.append("x: ");
-                stringBuilder.append(String.format("%.4f", sensorEvent.values[0]));
-                stringBuilder.append("\n");
-
-                stringBuilder.append("y: ");
-                stringBuilder.append(String.format("%.4f", sensorEvent.values[1]));
-                stringBuilder.append("\n");
-
-                stringBuilder.append("z: ");
-                stringBuilder.append(String.format("%.4f", sensorEvent.values[2]));
-                stringBuilder.append("\n");
-
-                output.setText(stringBuilder.toString());
-
-
+                ((TextView) findViewById(R.id.rot_x)).setText("x: " + String.format(FloatFormatString, sensorEvent.values[0]));
+                ((TextView) findViewById(R.id.rot_y)).setText("y: " + String.format(FloatFormatString, sensorEvent.values[1]));
+                ((TextView) findViewById(R.id.rot_z)).setText("z: " + String.format(FloatFormatString, sensorEvent.values[2]));
             }
             @Override
             public void onAccuracyChanged(Sensor sensor, int i) {
@@ -56,13 +42,44 @@ public class MainActivity extends AppCompatActivity {
             }
         };
 
+        accelerationListener = new SensorEventListener() {
 
-        output.setText("Ok");
+            @Override
+            public void onSensorChanged(SensorEvent sensorEvent) {
+                ((TextView) findViewById(R.id.acl_x)).setText("x: " + String.format(FloatFormatString, sensorEvent.values[0]));
+                ((TextView) findViewById(R.id.acl_y)).setText("y: " + String.format(FloatFormatString, sensorEvent.values[1]));
+                ((TextView) findViewById(R.id.acl_z)).setText("z: " + String.format(FloatFormatString, sensorEvent.values[2]));
+            }
+            @Override
+            public void onAccuracyChanged(Sensor sensor, int i) {
+
+            }
+        };
+
+        gravityListener = new SensorEventListener() {
+
+            @Override
+            public void onSensorChanged(SensorEvent sensorEvent) {
+                ((TextView) findViewById(R.id.grav_x)).setText("x: " + String.format(FloatFormatString, sensorEvent.values[0]));
+                ((TextView) findViewById(R.id.grav_y)).setText("y: " + String.format(FloatFormatString, sensorEvent.values[1]));
+                ((TextView) findViewById(R.id.grav_z)).setText("z: " + String.format(FloatFormatString, sensorEvent.values[2]));
+            }
+            @Override
+            public void onAccuracyChanged(Sensor sensor, int i) {
+
+            }
+        };
     }
 
+    void RegisterSensorListeners()
+    {
+        mSensorManager.registerListener(rotationListener, sensorRotation, SensorManager.SENSOR_DELAY_NORMAL);
+        mSensorManager.registerListener(accelerationListener, sensorAcceleration, SensorManager.SENSOR_DELAY_NORMAL);
+        mSensorManager.registerListener(gravityListener, sensorGravity, SensorManager.SENSOR_DELAY_NORMAL);
+    }
     @Override
     protected void onResume() {
         super.onResume();
-        mSensorManager.registerListener(sensorEventListener, mSensor, SensorManager.SENSOR_DELAY_NORMAL);
+        RegisterSensorListeners();
     }
 }
