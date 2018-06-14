@@ -4,138 +4,212 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:layout_margin="80dp"
+    android:layout_margin="0dp"
     tools:context=".MainActivity">
 
-    <LinearLayout
+    <TableLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical">
+        android:layout_height="match_parent">
 
-        <LinearLayout
+        <TableRow
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:layout_height="match_parent">
 
-            <TextView
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Rotation Vector"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintLeft_toLeftOf="parent"
-                app:layout_constraintRight_toRightOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+                android:orientation="vertical">
 
-            <TextView
-                android:id="@+id/rot_x"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:paddingLeft="10dp"
-                tools:layout_editor_absoluteX="82dp"
-                tools:layout_editor_absoluteY="204dp" />
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Gyro Vector"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintLeft_toLeftOf="parent"
+                    app:layout_constraintRight_toRightOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
 
-            <TextView
-                android:id="@+id/rot_y"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:paddingLeft="10dp"
-                tools:layout_editor_absoluteX="82dp"
-                tools:layout_editor_absoluteY="204dp" />
+                <TextView
+                    android:id="@+id/rot_value"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="monospace"
+                    android:paddingLeft="10dp"
+                    android:typeface="monospace"
+                    tools:layout_editor_absoluteX="82dp"
+                    tools:layout_editor_absoluteY="204dp" />
 
-            <TextView
-                android:id="@+id/rot_z"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:paddingLeft="10dp"
-                tools:layout_editor_absoluteX="82dp"
-                tools:layout_editor_absoluteY="204dp" />
+                <TextView
+                    android:id="@+id/rot_avg"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="monospace"
+                    android:text="TextView"
+                    android:typeface="monospace" />
 
-        </LinearLayout>
+                <TextView
+                    android:id="@+id/rot_avgMag"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="monospace"
+                    android:paddingLeft="10dp"
+                    android:typeface="monospace"
+                    tools:layout_editor_absoluteX="82dp"
+                    tools:layout_editor_absoluteY="204dp" />
 
-        <LinearLayout
+                <TextView
+                    android:id="@+id/rot_jerk"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="monospace"
+                    android:text="TextView"
+                    android:typeface="monospace" />
+
+            </LinearLayout>
+        </TableRow>
+
+        <TableRow
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:layout_height="match_parent">
 
-            <TextView
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Acceleration"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintLeft_toLeftOf="parent"
-                app:layout_constraintRight_toRightOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+                android:orientation="vertical">
 
-            <TextView
-                android:id="@+id/acl_x"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="TextView"
-                android:paddingLeft="10dp"
-                tools:layout_editor_absoluteX="82dp"
-                tools:layout_editor_absoluteY="185dp" />
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Acceleration"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintLeft_toLeftOf="parent"
+                    app:layout_constraintRight_toRightOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
 
-            <TextView
-                android:id="@+id/acl_y"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="TextView"
-                android:paddingLeft="10dp"
-                tools:layout_editor_absoluteX="82dp"
-                tools:layout_editor_absoluteY="204dp" />
+                <TextView
+                    android:id="@+id/acl_value"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="monospace"
+                    android:paddingLeft="10dp"
+                    android:text="TextView"
+                    android:typeface="monospace"
+                    tools:layout_editor_absoluteX="82dp"
+                    tools:layout_editor_absoluteY="185dp" />
 
-            <TextView
-                android:id="@+id/acl_z"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="TextView"
-                android:paddingLeft="10dp"
-                tools:layout_editor_absoluteX="82dp"
-                tools:layout_editor_absoluteY="223dp" />
-        </LinearLayout>
+                <TextView
+                    android:id="@+id/acl_avg"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="monospace"
+                    android:paddingLeft="10dp"
+                    android:text="TextView"
+                    android:typeface="monospace"
+                    tools:layout_editor_absoluteX="82dp"
+                    tools:layout_editor_absoluteY="223dp" />
 
-        <LinearLayout
+                <TextView
+                    android:id="@+id/acl_avgMag"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="monospace"
+                    android:paddingLeft="10dp"
+                    android:text="TextView"
+                    android:typeface="monospace"
+                    tools:layout_editor_absoluteX="82dp"
+                    tools:layout_editor_absoluteY="204dp" />
+
+                <TextView
+                    android:id="@+id/acl_jerk"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="monospace"
+                    android:paddingLeft="10dp"
+                    android:text="TextView"
+                    android:typeface="monospace"
+                    tools:layout_editor_absoluteX="82dp"
+                    tools:layout_editor_absoluteY="223dp" />
+            </LinearLayout>
+        </TableRow>
+
+        <TableRow
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:layout_height="match_parent">
 
-            <TextView
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Gravity"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintLeft_toLeftOf="parent"
-                app:layout_constraintRight_toRightOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Gravity"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintLeft_toLeftOf="parent"
+                    app:layout_constraintRight_toRightOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <TextView
+                    android:id="@+id/grav_value"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="monospace"
+                    android:paddingLeft="10dp"
+                    android:text="TextView"
+                    tools:layout_editor_absoluteX="82dp"
+                    tools:layout_editor_absoluteY="185dp" />
+
+                <TextView
+                    android:id="@+id/grav_avg"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="monospace"
+                    android:paddingLeft="10dp"
+                    android:text="TextView"
+                    tools:layout_editor_absoluteX="82dp"
+                    tools:layout_editor_absoluteY="223dp" />
+
+                <TextView
+                    android:id="@+id/grav_avgMag"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="monospace"
+                    android:paddingLeft="10dp"
+                    android:text="TextView"
+                    tools:layout_editor_absoluteX="82dp"
+                    tools:layout_editor_absoluteY="204dp" />
+
+                <TextView
+                    android:id="@+id/grav_jerk"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="monospace"
+                    android:paddingLeft="10dp"
+                    android:text="TextView"
+                    tools:layout_editor_absoluteX="82dp"
+                    tools:layout_editor_absoluteY="223dp" />
+
+            </LinearLayout>
+        </TableRow>
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" >
 
             <TextView
-                android:id="@+id/grav_x"
-                android:layout_width="match_parent"
+                android:id="@+id/debugRequestResponse"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:paddingLeft="10dp"
-                android:text="TextView"
-                tools:layout_editor_absoluteX="82dp"
-                tools:layout_editor_absoluteY="185dp" />
+                android:text="TextView" />
 
-            <TextView
-                android:id="@+id/grav_y"
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:paddingLeft="10dp"
-                android:text="TextView"
-                tools:layout_editor_absoluteX="82dp"
-                tools:layout_editor_absoluteY="204dp" />
+                android:layout_height="match_parent"
+                android:orientation="vertical">
 
-            <TextView
-                android:id="@+id/grav_z"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:paddingLeft="10dp"
-                android:text="TextView"
-                tools:layout_editor_absoluteX="82dp"
-                tools:layout_editor_absoluteY="223dp" />
-        </LinearLayout>
-
-    </LinearLayout>
+            </LinearLayout>
+        </TableRow>
+    </TableLayout>
 
 </android.support.constraint.ConstraintLayout>
