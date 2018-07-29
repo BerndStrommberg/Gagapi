@@ -1,6 +1,7 @@
 package de.gagapi.androidapp;
 
 import android.content.*;
+import android.graphics.Color;
 import android.hardware.*;
 import android.os.SystemClock;
 import android.support.annotation.NonNull;
@@ -13,6 +14,11 @@ import java.util.Arrays;
 import com.android.volley.*;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.androidplot.xy.BoundaryMode;
+import com.androidplot.xy.LineAndPointFormatter;
+import com.androidplot.xy.SimpleXYSeries;
+import com.androidplot.xy.StepMode;
+import com.androidplot.xy.XYPlot;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -21,12 +27,12 @@ public class MainActivity extends AppCompatActivity {
     private Sensor sensorGyro, sensorAcceleration, sensorGravity;
     private SensorEventListener gyroListener, accelerationListener, gravityListener;
 
-
+    private XYPlot plotter1;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
+        plotter1 =  (XYPlot) findViewById(R.id.ploter);
         InitalizeSensorListeners();
         
         // outline:
@@ -152,28 +158,71 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    public abstract class Filter
+    {
+       public abstract float Step(float nextInValue);
+    }
+
+    class LowPassFilter extends Filter
+    {
+        /* Digital filter designed by mkfilter/mkshape/gencode   A.J. Fisher
+        Command line: /www/usr/fisher/helpers/mkfilter -Bu -Lp -o 3 -a 4.0000000000e-01 0.0000000000e+00 -l */
+
+        static final int NZEROS = 3;
+        static final int NPOLES = 3;
+        static final float GAIN  = 1.895287695e+00f;
+
+        float[] xv = new float[NZEROS+1], yv = new float[NPOLES+1];
+
+        @Override
+        public float Step(float nextInputValue)
+        {
+            { xv[0] = xv[1]; xv[1] = xv[2]; xv[2] = xv[3];
+                xv[3] = nextInputValue / GAIN;
+                yv[0] = yv[1]; yv[1] = yv[2]; yv[2] = yv[3];
+                yv[3] =  (xv[0] + xv[3]) + 3 * (xv[1] + xv[2])
+                        + ( -0.2780599176f * yv[0]) + ( -1.1828932620f * yv[1])
+                        + ( -1.7600418803f * yv[2]);
+               return yv[3];
+            }
+        }
+    }
+
     static class MathyStuffFromListyList
     {
         public float3 medianValue;
         public float medianMag;
 
         public float3 medianJerk;
-        public MathyStuffFromListyList(ArrayList<float3> list)
+        public MathyStuffFromListyList(ArrayList<float3> sampleValues, Filter filterX, Filter filterY, Filter filterZ)
         {
-            int arrayLength = list.size();
+            int arrayLength = sampleValues.size();
 
-            float3[] asArray = new float3[arrayLength];
-            list.toArray(asArray);
+            // convert the values to an array for futher proccessing
+            float3[] sampleValuesArray = new float3[arrayLength];
+            sampleValues.toArray(sampleValuesArray);
 
+            // if a filter is present, apply it to the values
+            if(filterX != null)
+            {
+                // loop over each sample and apply the filter
+                for(int i = 0; i < sampleValuesArray.length; i++)
+                {
+                    float3 sample = sampleValues.get(i);
+                    float x = filterX.Step(sample.x);
+                    float y = filterY.Step(sample.y);
+                    float z = filterZ.Step(sample.z);
+                    sampleValuesArray[i] = new float3(x, y, z); // write filtered value
+                }
+            }
             //TODO: smooth out the values with a butterworth filter (http://www-users.cs.york.ac.uk/~fisher/cgi-bin/mkfscript)
-            Arrays.sort(asArray);
+            Arrays.sort(sampleValuesArray);
 
-
-            int middle =  arrayLength / 2;
-            if (asArray.length%2 == 1) {
-                medianValue = asArray[middle];
+            int middle = arrayLength / 2;
+            if (sampleValuesArray.length%2 == 1) {
+                medianValue = sampleValuesArray[middle];
             } else {
-                medianValue = (asArray[middle-1].add(asArray[middle])).mul(0.5f);
+                medianValue = (sampleValuesArray[middle-1].add(sampleValuesArray[middle])).mul(0.5f);
             }
 
             medianMag = medianValue.length();
@@ -183,12 +232,54 @@ public class MainActivity extends AppCompatActivity {
 
     class AdvancedSensorEventListener implements SensorEventListener
     {
+        int HISTORY_SIZE = 1000;
         public AdvancedSensorEventListener(TextView debugRawValue, TextView debugAverageValue, TextView debugAverageMag, TextView debugAverageJerk) {
             this.debugRawValue = debugRawValue;
             this.debugAverageValue = debugAverageValue;
             this.debugAverageMag = debugAverageMag;
             this.debugAverageJerk = debugAverageJerk;
         }
+
+
+        public AdvancedSensorEventListener(XYPlot xyPlot, Filter filterX, Filter filterY, Filter filterZ, TextView debugRawValue, TextView debugAverageValue, TextView debugAverageMag, TextView debugAverageJerk) {
+            plotter = xyPlot;
+            FilterX = filterX;
+            FilterY = filterY;
+            FilterZ = filterZ;
+            this.debugRawValue = debugRawValue;
+            this.debugAverageValue = debugAverageValue;
+            this.debugAverageMag = debugAverageMag;
+            this.debugAverageJerk = debugAverageJerk;
+
+            // plotter
+            xSeries = new SimpleXYSeries("X");
+            xSeries.useImplicitXVals();
+            ySeries = new SimpleXYSeries("Y");
+            ySeries.useImplicitXVals();
+            zSeries = new SimpleXYSeries("Z");
+            zSeries.useImplicitXVals();
+
+            plotter.addSeries(xSeries, new LineAndPointFormatter(
+                    Color.rgb(100, 100, 200), null, null, null));
+
+            plotter.addSeries(ySeries, new LineAndPointFormatter(
+                    Color.rgb(100, 200, 100), null, null, null));
+
+            plotter.addSeries(zSeries, new LineAndPointFormatter(
+                    Color.rgb(200, 100, 100), null, null, null));
+
+            plotter.setRangeBoundaries(-180, 359, BoundaryMode.FIXED);
+            plotter.setDomainBoundaries(0, HISTORY_SIZE, BoundaryMode.FIXED);
+
+            plotter.setDomainStepMode(StepMode.INCREMENT_BY_VAL);
+            plotter.setDomainStepValue(HISTORY_SIZE/10);
+        }
+
+        private SimpleXYSeries xSeries, ySeries, zSeries, xLvlSeries, yLvlSeries, zLvlSeries;
+        XYPlot plotter = null;
+        Filter FilterX;
+        Filter FilterY;
+        Filter FilterZ;
 
         TextView debugRawValue, debugAverageValue, debugAverageMag, debugAverageJerk;
 
@@ -216,11 +307,27 @@ public class MainActivity extends AppCompatActivity {
             long tCurrent = SystemClock.elapsedRealtime();
             long tDelta = tCurrent - tPrevious;
             float elapsedSeconds = tDelta / 1000.0f;
+            if(plotter != null)
+            {
+            //    xSeries.setModel(Arrays.asList(new Number[] {value.x}), SimpleXYSeries.ArrayFormat.Y_VALS_ONLY );
+            //    ySeries.setModel(Arrays.asList(new Number[] {value.y}), SimpleXYSeries.ArrayFormat.Y_VALS_ONLY );
+           //     zSeries.setModel(Arrays.asList(new Number[] {value.z}), SimpleXYSeries.ArrayFormat.Y_VALS_ONLY );
+                if(xSeries.size() > HISTORY_SIZE)
+                {
+                    xSeries.removeFirst();
+                    ySeries.removeFirst();
+                    zSeries.removeFirst();
+                }
+
+                xSeries.addLast(null, value.x);
+                ySeries.addLast(null, value.y);
+                zSeries.addLast(null, value.z);
+            }
 
             if(elapsedSeconds > SENDING_RATE_SECONDS)
             {
                 tPrevious = tCurrent;
-                MathyStuffFromListyList mathstuff = new MathyStuffFromListyList(accumulatedValues);
+                MathyStuffFromListyList mathstuff = new MathyStuffFromListyList(accumulatedValues, FilterX, FilterY, FilterZ);
                 debugAverageValue.setText("median: " + mathstuff.medianValue.toString());
                 debugAverageMag.setText("medianMag: " + Float.toString(mathstuff.medianMag));
                 accumulatedValues.clear();
@@ -248,7 +355,9 @@ public class MainActivity extends AppCompatActivity {
                 (TextView) findViewById(R.id.rot_avgMag),
                 (TextView) findViewById(R.id.rot_jerk));
 
+        LowPassFilter LPFx = new LowPassFilter(), LPFy = new LowPassFilter(), LPFz = new LowPassFilter();
         accelerationListener =  new AdvancedSensorEventListener(
+                plotter1, LPFx, LPFy, LPFz,
                 (TextView) findViewById(R.id.acl_value),
                 (TextView) findViewById(R.id.acl_avg),
                 (TextView) findViewById(R.id.acl_avgMag),
