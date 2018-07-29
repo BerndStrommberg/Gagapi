@@ -16,12 +16,6 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <com.androidplot.xy.XYPlot
-                android:id="@+id/ploter"
-                style="@style/APDefacto.Dark"
-                android:layout_width="match_parent"
-                android:layout_height="313dp" />
-
             <TextView
                 android:id="@+id/debugRequestResponse"
                 android:layout_width="match_parent"
@@ -78,6 +72,15 @@
                 tools:layout_editor_absoluteY="185dp" />
 
             <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Acceleration"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
                 android:id="@+id/acl_jerk"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -110,14 +113,10 @@
                 tools:layout_editor_absoluteX="82dp"
                 tools:layout_editor_absoluteY="185dp" />
 
-            <TextView
+            <com.jjoe64.graphview.GraphView
+                android:id="@+id/graph"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Acceleration"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintLeft_toLeftOf="parent"
-                app:layout_constraintRight_toRightOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+                android:layout_height="200dip" />
 
             <TextView
                 android:id="@+id/acl_avg"
@@ -131,14 +130,6 @@
                 tools:layout_editor_absoluteY="223dp" />
 
             <TextView
-                android:id="@+id/rot_jerk"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:fontFamily="monospace"
-                android:text="TextView"
-                android:typeface="monospace" />
-
-            <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Gyro Vector"
@@ -146,6 +137,14 @@
                 app:layout_constraintLeft_toLeftOf="parent"
                 app:layout_constraintRight_toRightOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/rot_jerk"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:fontFamily="monospace"
+                android:text="TextView"
+                android:typeface="monospace" />
 
             <TextView
                 android:id="@+id/rot_avgMag"
