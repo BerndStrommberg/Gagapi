@@ -24,17 +24,16 @@ public class MainActivity extends AppCompatActivity {
     private Sensor sensorGyro, sensorAcceleration, sensorGravity;
     private SensorEventListener gyroListener, accelerationListener, gravityListener;
 
-    GraphView graph;
+    GraphView graphAcc, graphGrav, graphGyro;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
 
-        graph = (GraphView) findViewById(R.id.graph);
-        graph.getViewport().setXAxisBoundsManual(true);
-        graph.getViewport().setMinX(0);
-        graph.getViewport().setMaxX(40);
+        graphAcc = SetupGraphView((GraphView) findViewById(R.id.graphAcc));
+        graphGrav = SetupGraphView((GraphView) findViewById(R.id.graphGrav));
+        graphGyro = SetupGraphView((GraphView) findViewById(R.id.graphGyro));
         InitalizeSensorListeners();
         // outline:
         // if 2.5 sec elapsed
@@ -43,6 +42,16 @@ public class MainActivity extends AppCompatActivity {
         //      use response as new ID
     }
 
+    static GraphView SetupGraphView(GraphView graph)
+    {
+        graph.getViewport().setXAxisBoundsManual(true);
+        graph.getViewport().setMinX(0);
+        graph.getViewport().setMaxX(40);
+        graph.getViewport().setYAxisBoundsManual(true);
+        graph.getViewport().setMaxY(1);
+        graph.getLegendRenderer().setVisible(true);
+        return graph;
+    }
     void DemoRequest()
     {
         final TextView mTextView = (TextView) findViewById(R.id.debugRequestResponse);
@@ -104,25 +113,13 @@ public class MainActivity extends AppCompatActivity {
         sensorAcceleration = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         sensorGravity = mSensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY);
 
-        gyroListener = new AdvancedSensorEventListener(
-                (TextView) findViewById(R.id.rot_value),
-                (TextView) findViewById(R.id.rot_avg),
-                (TextView) findViewById(R.id.rot_avgMag),
-                (TextView) findViewById(R.id.rot_jerk));
+        //TODO: filter for gravity
+        gyroListener = new AdvancedSensorEventListener("", graphGyro, null, null, null);
 
         LowPassFilter LPFx = new LowPassFilter(), LPFy = new  LowPassFilter(), LPFz = new LowPassFilter();
-        accelerationListener =  new AdvancedSensorEventListener(
-                 graph, LPFx, LPFy, LPFz,
-                (TextView) findViewById(R.id.acl_value),
-                (TextView) findViewById(R.id.acl_avg),
-                (TextView) findViewById(R.id.acl_avgMag),
-                (TextView) findViewById(R.id.acl_jerk));
+        accelerationListener =  new AdvancedSensorEventListener("", graphAcc, LPFx, LPFy, LPFz);
 
-        gravityListener =  new AdvancedSensorEventListener(
-                (TextView) findViewById(R.id.grav_value),
-                (TextView) findViewById(R.id.grav_avg),
-                (TextView) findViewById(R.id.grav_avgMag),
-                (TextView) findViewById(R.id.grav_jerk));
+        gravityListener =  new AdvancedSensorEventListener("", graphGrav, null, null, null);
     }
 
     void RegisterSensorListeners()

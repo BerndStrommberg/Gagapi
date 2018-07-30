@@ -23,156 +23,52 @@
                 android:text="TextView" />
 
             <TextView
-                android:id="@+id/grav_avg"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:fontFamily="monospace"
-                android:paddingLeft="10dp"
-                android:text="TextView"
-                tools:layout_editor_absoluteX="82dp"
-                tools:layout_editor_absoluteY="223dp" />
-
-            <TextView
-                android:id="@+id/grav_avgMag"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:fontFamily="monospace"
-                android:paddingLeft="10dp"
-                android:text="TextView"
-                tools:layout_editor_absoluteX="82dp"
-                tools:layout_editor_absoluteY="204dp" />
-
-            <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Gravity"
+                android:textAlignment="center"
+                android:textSize="18sp"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintLeft_toLeftOf="parent"
                 app:layout_constraintRight_toRightOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
-            <TextView
-                android:id="@+id/grav_jerk"
+            <com.jjoe64.graphview.GraphView
+                android:id="@+id/graphGrav"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:fontFamily="monospace"
-                android:paddingLeft="10dp"
-                android:text="TextView"
-                tools:layout_editor_absoluteX="82dp"
-                tools:layout_editor_absoluteY="223dp" />
-
-            <TextView
-                android:id="@+id/grav_value"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:fontFamily="monospace"
-                android:paddingLeft="10dp"
-                android:text="TextView"
-                tools:layout_editor_absoluteX="82dp"
-                tools:layout_editor_absoluteY="185dp" />
+                android:layout_height="200dip" />
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Acceleration"
+                android:textAlignment="center"
+                android:textSize="18sp"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintLeft_toLeftOf="parent"
                 app:layout_constraintRight_toRightOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
-            <TextView
-                android:id="@+id/acl_jerk"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:fontFamily="monospace"
-                android:paddingLeft="10dp"
-                android:text="TextView"
-                android:typeface="monospace"
-                tools:layout_editor_absoluteX="82dp"
-                tools:layout_editor_absoluteY="223dp" />
-
-            <TextView
-                android:id="@+id/acl_avgMag"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:fontFamily="monospace"
-                android:paddingLeft="10dp"
-                android:text="TextView"
-                android:typeface="monospace"
-                tools:layout_editor_absoluteX="82dp"
-                tools:layout_editor_absoluteY="204dp" />
-
-            <TextView
-                android:id="@+id/acl_value"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:fontFamily="monospace"
-                android:paddingLeft="10dp"
-                android:text="TextView"
-                android:typeface="monospace"
-                tools:layout_editor_absoluteX="82dp"
-                tools:layout_editor_absoluteY="185dp" />
-
             <com.jjoe64.graphview.GraphView
-                android:id="@+id/graph"
+                android:id="@+id/graphAcc"
                 android:layout_width="match_parent"
                 android:layout_height="200dip" />
-
-            <TextView
-                android:id="@+id/acl_avg"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:fontFamily="monospace"
-                android:paddingLeft="10dp"
-                android:text="TextView"
-                android:typeface="monospace"
-                tools:layout_editor_absoluteX="82dp"
-                tools:layout_editor_absoluteY="223dp" />
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Gyro Vector"
+                android:textAlignment="center"
+                android:textSize="18sp"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintLeft_toLeftOf="parent"
                 app:layout_constraintRight_toRightOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
-            <TextView
-                android:id="@+id/rot_jerk"
+            <com.jjoe64.graphview.GraphView
+                android:id="@+id/graphGyro"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:fontFamily="monospace"
-                android:text="TextView"
-                android:typeface="monospace" />
-
-            <TextView
-                android:id="@+id/rot_avgMag"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:fontFamily="monospace"
-                android:paddingLeft="10dp"
-                android:typeface="monospace"
-                tools:layout_editor_absoluteX="82dp"
-                tools:layout_editor_absoluteY="204dp" />
-
-            <TextView
-                android:id="@+id/rot_avg"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:fontFamily="monospace"
-                android:text="TextView"
-                android:typeface="monospace" />
-
-            <TextView
-                android:id="@+id/rot_value"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:fontFamily="monospace"
-                android:paddingLeft="10dp"
-                android:typeface="monospace"
-                tools:layout_editor_absoluteX="82dp"
-                tools:layout_editor_absoluteY="204dp" />
+                android:layout_height="200dip" />
 
         </LinearLayout>
     </ScrollView>

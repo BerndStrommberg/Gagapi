@@ -22,53 +22,86 @@ class AdvancedSensorEventListener implements SensorEventListener
         this.debugMedianValue = debugMedianValue;
         this.debugAverageMag = debugAverageMag;
         this.debugAverageJerk = debugAverageJerk;
+
+        sensorSampleProcessor = new SensorSampleProcessor();
     }
 
-    public AdvancedSensorEventListener(GraphView graph, Filter filterX, Filter filterY, Filter filterZ, TextView debugRawValue, TextView debugMedianValue, TextView debugAverageMag, TextView debugAverageJerk) {
-
+    public AdvancedSensorEventListener(String title, GraphView graph, Filter filterX, Filter filterY, Filter filterZ)
+    {
         this.graph = graph;
-        FilterX = filterX;
-        FilterY = filterY;
-        FilterZ = filterZ;
-        this.debugRawValue = debugRawValue;
-        this.debugMedianValue = debugMedianValue;
-        this.debugAverageMag = debugAverageMag;
-        this.debugAverageJerk = debugAverageJerk;
-
+        sensorSampleProcessor = new SensorSampleProcessor(filterX, filterY, filterZ);
         graphSeriesX = new LineGraphSeries();
-        graphSeriesY = new LineGraphSeries();
-        graphSeriesZ = new LineGraphSeries();
+        graphSeriesX.setTitle(title + "x");
         graphSeriesX.setColor(Color.RED);
-        graphSeriesY.setColor(Color.GREEN);
-        graphSeriesZ.setColor(Color.BLUE);
         graph.addSeries(graphSeriesX);
+
+        graphSeriesY = new LineGraphSeries();
+        graphSeriesY.setTitle(title + "y");
+        graphSeriesY.setColor(Color.GREEN);
         graph.addSeries(graphSeriesY);
+
+        graphSeriesZ = new LineGraphSeries();
+        graphSeriesZ.setTitle(title + "z");
+        graphSeriesZ.setColor(Color.BLUE);
         graph.addSeries(graphSeriesZ);
+
+        medianMag = new LineGraphSeries();
+        medianMag.setTitle(title + "Mag.");
+        medianMag.setColor(Color.BLACK);
+        graph.addSeries(medianMag);
+
+        medianJerk = new LineGraphSeries();
+        medianJerk.setTitle(title + "Jerk. ");
+        medianJerk.setColor(Color.YELLOW);
+        graph.addSeries(medianJerk);
     }
 
     GraphView graph = null;
-    private LineGraphSeries graphSeriesX, graphSeriesY, graphSeriesZ;
-
-    Filter FilterX;
-    Filter FilterY;
-    Filter FilterZ;
+    private LineGraphSeries graphSeriesX, graphSeriesY, graphSeriesZ, medianMag, medianJerk;
 
     TextView debugRawValue, debugMedianValue, debugAverageMag, debugAverageJerk;
 
     ArrayList<float3> accumulatedValues = new ArrayList<>();
-    ArrayList<float3> accumulatedJerk = new ArrayList<>();
+
+    SensorSampleProcessor sensorSampleProcessor;
     final float SENDING_RATE_SECONDS = 2.5f;
 
     float3 previousValue = new float3(0,0,0);
     long tPrevious = -1;
 
-    static class MathyStuffFromListyList
+    // obtains median value of the supplied list
+    static class SensorSampleProcessor
     {
+        static float3 getMedian(float3[] values)
+        {
+            Arrays.sort(values);
+            int arrayLength = values.length;
+            int middle = arrayLength / 2;
+            float3 median;
+            if (values.length%2 == 1) {
+                return values[middle];
+            } else {
+                return (values[middle-1].add(values[middle])).mul(0.5f);
+            }
+        }
+
         public float3 medianValue;
         public float medianMag;
-
+        float3 preValue = new float3(0,0,0);
         public float3 medianJerk;
-        public MathyStuffFromListyList(ArrayList<float3> sampleValues, Filter filterX, Filter filterY, Filter filterZ)
+        ArrayList<float3> jerkness = new ArrayList<>();
+
+        public SensorSampleProcessor(Filter filterX, Filter filterY, Filter filterZ) {
+            this.filterX = filterX;
+            this.filterY = filterY;
+            this.filterZ = filterZ;
+        }
+
+        public SensorSampleProcessor() {}
+
+        Filter filterX, filterY, filterZ;
+
+        public void Process(ArrayList<float3> sampleValues)
         {
             int arrayLength = sampleValues.size();
 
@@ -79,6 +112,7 @@ class AdvancedSensorEventListener implements SensorEventListener
             // if a filter is present, apply it to the values
             if(filterX != null)
             {
+                //(http://www-users.cs.york.ac.uk/~fisher/cgi-bin/mkfscript)
                 // loop over each sample and apply the filter
                 for(int i = 0; i < sampleValuesArray.length; i++)
                 {
@@ -89,16 +123,20 @@ class AdvancedSensorEventListener implements SensorEventListener
                     sampleValuesArray[i] = new float3(x, y, z); // write filtered value
                 }
             }
-            //(http://www-users.cs.york.ac.uk/~fisher/cgi-bin/mkfscript)
-            Arrays.sort(sampleValuesArray);
 
-            int middle = arrayLength / 2;
-            if (sampleValuesArray.length%2 == 1) {
-                medianValue = sampleValuesArray[middle];
-            } else {
-                medianValue = (sampleValuesArray[middle-1].add(sampleValuesArray[middle])).mul(0.5f);
+            // compute jerkness
+            jerkness.clear();
+            for(int i = 0; i < sampleValuesArray.length; i++) {
+                float3 currentValue = sampleValuesArray[i];
+                jerkness.add(preValue.sub(currentValue));
+                preValue = currentValue;
             }
 
+            float3[] jerknessArray = new float3[jerkness.size()];
+            jerkness.toArray(jerknessArray);
+            medianJerk = getMedian(jerknessArray);
+
+            medianValue = getMedian(sampleValuesArray);
             medianMag = medianValue.length();
         }
     }
@@ -107,11 +145,6 @@ class AdvancedSensorEventListener implements SensorEventListener
     public void onSensorChanged(SensorEvent sensorEvent) {
         float3 value = new float3(sensorEvent.values[0], sensorEvent.values[1], sensorEvent.values[2]);
 
-        //TODO: use actuall average Jerkness
-        float3 jerkness = previousValue.sub(value);
-        debugAverageJerk.setText("jerk: " + jerkness.toString());
-
-        accumulatedJerk.add(jerkness);
         previousValue = value;
         // store rotation inside list
         accumulatedValues.add(value);
@@ -124,22 +157,28 @@ class AdvancedSensorEventListener implements SensorEventListener
         if(elapsedSeconds > SENDING_RATE_SECONDS)
         {
             tPrevious = tCurrent;
-            MathyStuffFromListyList mathstuff = new MathyStuffFromListyList(accumulatedValues, FilterX, FilterY, FilterZ);
-            debugMedianValue.setText("median: " + mathstuff.medianValue.toString());
-            debugAverageMag.setText("medianMag: " + Float.toString(mathstuff.medianMag));
+            sensorSampleProcessor.Process(accumulatedValues);
             accumulatedValues.clear();
 
             if(graph != null)
             {
-                graphSeriesX.appendData(new DataPoint(graphIndex, mathstuff.medianValue.x), true, 40);
-                graphSeriesY.appendData(new DataPoint(graphIndex, mathstuff.medianValue.y), true, 40);
-                graphSeriesZ.appendData(new DataPoint(graphIndex, mathstuff.medianValue.z), true, 40);
+                graphSeriesX.appendData(new DataPoint(graphIndex, sensorSampleProcessor.medianValue.x), true, 40);
+                graphSeriesY.appendData(new DataPoint(graphIndex, sensorSampleProcessor.medianValue.y), true, 40);
+                graphSeriesZ.appendData(new DataPoint(graphIndex, sensorSampleProcessor.medianValue.z), true, 40);
+                medianMag.appendData(new DataPoint(graphIndex, sensorSampleProcessor.medianMag), true, 40);
+
+                medianJerk.appendData(new DataPoint(graphIndex, sensorSampleProcessor.medianJerk.length()), true, 40);
                 graphIndex++;
+            }else
+            {
+                debugMedianValue.setText("median: " + sensorSampleProcessor.medianValue.toString());
+                debugAverageMag.setText("medianMag: " + Float.toString(sensorSampleProcessor.medianMag));
+                //  debug output
+                debugRawValue.setText("value: " + value.toString());
             }
         }
 
-        //  debug output
-        debugRawValue.setText("value: " + value.toString());
+
     }
 
     @Override
