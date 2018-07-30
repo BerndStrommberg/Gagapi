@@ -4,6 +4,8 @@ import android.support.annotation.NonNull;
 
 class float3 implements Comparable<float3>
 {
+    public static final float3 Zero = new float3(0,0,0);
+
     public float3(float x, float y, float z) {
         this.x = x;
         this.y = y;
