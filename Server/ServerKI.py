@@ -1,9 +1,3 @@
-
-# coding: utf-8
-
-# In[5]:
-
-
 from keras.models import Sequential
 from keras.layers import Dense, Activation, Dropout
 from keras.models import load_model
@@ -14,7 +8,6 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 import logging
 
 
-# In[6]:
 
 
 model = load_model("first_try.h5")
@@ -28,7 +21,6 @@ labels = {
     6 : "LAYING" 
 }
 
-# In[7]:
 
 
 class S(BaseHTTPRequestHandler):
