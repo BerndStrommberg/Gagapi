@@ -1,8 +1,10 @@
+import keras
+import tensorflow as tf
 from keras.models import Sequential
 from keras.layers import Dense, Activation, Dropout
 from keras.models import load_model
 import numpy as np
-import pandas as pd
+#import pandas as pd
 
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import logging
@@ -10,8 +12,12 @@ import logging
 
 
 
-model = load_model("first_try.h5")
+mos_voice = "[MORITZ-COOL-VOICE]: " 
+print(mos_voice + "Imported all dependencies")
+print(mos_voice + "keras version: " + str(keras.__version__))
 
+model = load_model("without_fouier_try.h5")
+print(mos_voice + "Model Loaded")
 labels = {
     1 : "WALKING",
     2 : "WALKING_UPSTAIRS",
@@ -20,8 +26,6 @@ labels = {
     5 : "STANDING",
     6 : "LAYING" 
 }
-
-
 
 class S(BaseHTTPRequestHandler):
     def _set_response(self):
@@ -36,12 +40,11 @@ class S(BaseHTTPRequestHandler):
         data = path[index:]
 
 
-        print("")
-        print("")
-        print("")
-        print("")
-        print("---This is the recieved data---")
+        """ print("---This is the recieved data---")
         print(data)
+ """
+        
+ 
         print("---This is the type of the data---")
         print(type(data))
 
@@ -49,7 +52,7 @@ class S(BaseHTTPRequestHandler):
         input = np.fromstring(data, dtype = float, sep=",")
         print(input.shape)
         print(input)
-        realInput = input.reshape((1,33))
+        realInput = input.reshape((1,20))
         
         
         print("Reshaped Input")
@@ -59,6 +62,13 @@ class S(BaseHTTPRequestHandler):
         print("---Generatet output---")
         print(output)
         print(labels[np.argmax(output)+1])
+        
+        file = open("sitting_data.csv", "a")
+        file.write("\n")
+        file.write(data)
+        print("wrote data")
+        file.close()
+
 
   
 
