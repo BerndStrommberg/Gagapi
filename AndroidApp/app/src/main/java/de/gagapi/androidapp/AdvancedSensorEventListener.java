@@ -26,6 +26,7 @@ class AdvancedSensorEventListener implements SensorEventListener
         sensorSampleProcessor = new SensorSampleProcessor();
     }
 
+
     public AdvancedSensorEventListener(String title, GraphView graph, Filter filterX, Filter filterY, Filter filterZ)
     {
         this.graph = graph;
@@ -63,6 +64,10 @@ class AdvancedSensorEventListener implements SensorEventListener
 
     ArrayList<float3> accumulatedValues = new ArrayList<>();
 
+    public SensorSampleProcessor getSensorSampleProcessor() {
+        return sensorSampleProcessor;
+    }
+
     SensorSampleProcessor sensorSampleProcessor;
     final float SENDING_RATE_SECONDS = 2.5f;
 
@@ -77,7 +82,6 @@ class AdvancedSensorEventListener implements SensorEventListener
             Arrays.sort(values);
             int arrayLength = values.length;
             int middle = arrayLength / 2;
-            float3 median;
             if (values.length%2 == 1) {
                 return values[middle];
             } else {
@@ -85,10 +89,18 @@ class AdvancedSensorEventListener implements SensorEventListener
             }
         }
 
-        public float3 medianValue;
-        public float medianMag;
-        float3 preValue = new float3(0,0,0);
-        public float3 medianJerk;
+        static float3 getMean(float3[] values)
+        {
+            float3 mean = values[0];
+            for (int i = 1; i < values.length ; i++) {
+                mean = mean.add(values[i]);
+            }
+            return mean.mul(1f / (float)values.length);
+        }
+        public float3 valueMedian = float3.Zero, valueMean = float3.Zero;
+
+        float3 preValue = float3.Zero;
+        public float3 jerkMedian = float3.Zero, jerkMean = float3.Zero;
         ArrayList<float3> jerkness = new ArrayList<>();
 
         public SensorSampleProcessor(Filter filterX, Filter filterY, Filter filterZ) {
@@ -134,13 +146,16 @@ class AdvancedSensorEventListener implements SensorEventListener
 
             float3[] jerknessArray = new float3[jerkness.size()];
             jerkness.toArray(jerknessArray);
-            medianJerk = getMedian(jerknessArray);
 
-            medianValue = getMedian(sampleValuesArray);
-            medianMag = medianValue.length();
+            jerkMedian = getMedian(jerknessArray);
+            jerkMean = getMean(jerknessArray);
+
+            valueMedian = getMedian(sampleValuesArray);
+            valueMean = getMean(sampleValuesArray);
         }
     }
     int graphIndex = 0;
+
     @Override
     public void onSensorChanged(SensorEvent sensorEvent) {
         float3 value = new float3(sensorEvent.values[0], sensorEvent.values[1], sensorEvent.values[2]);
@@ -158,21 +173,25 @@ class AdvancedSensorEventListener implements SensorEventListener
         {
             tPrevious = tCurrent;
             sensorSampleProcessor.Process(accumulatedValues);
-            accumulatedValues.clear();
+            int accumSize = accumulatedValues.size(); //remove half of the data
+            for (int i = 0; i < accumSize / 2; i++) {
+                accumulatedValues.remove(0);
+            }
+
 
             if(graph != null)
             {
-                graphSeriesX.appendData(new DataPoint(graphIndex, sensorSampleProcessor.medianValue.x), true, 40);
-                graphSeriesY.appendData(new DataPoint(graphIndex, sensorSampleProcessor.medianValue.y), true, 40);
-                graphSeriesZ.appendData(new DataPoint(graphIndex, sensorSampleProcessor.medianValue.z), true, 40);
-                medianMag.appendData(new DataPoint(graphIndex, sensorSampleProcessor.medianMag), true, 40);
+                graphSeriesX.appendData(new DataPoint(graphIndex, sensorSampleProcessor.valueMedian.x), true, 40);
+                graphSeriesY.appendData(new DataPoint(graphIndex, sensorSampleProcessor.valueMedian.y), true, 40);
+                graphSeriesZ.appendData(new DataPoint(graphIndex, sensorSampleProcessor.valueMedian.z), true, 40);
+                medianMag.appendData(new DataPoint(graphIndex, sensorSampleProcessor.valueMean.length()), true, 40);
 
-                medianJerk.appendData(new DataPoint(graphIndex, sensorSampleProcessor.medianJerk.length()), true, 40);
+                medianJerk.appendData(new DataPoint(graphIndex, sensorSampleProcessor.jerkMedian.length()), true, 40);
                 graphIndex++;
             }else
             {
-                debugMedianValue.setText("median: " + sensorSampleProcessor.medianValue.toString());
-                debugAverageMag.setText("medianMag: " + Float.toString(sensorSampleProcessor.medianMag));
+                debugMedianValue.setText("median: " + sensorSampleProcessor.valueMedian.toString());
+                debugAverageMag.setText("meanMag: " + Float.toString(sensorSampleProcessor.valueMean.length()));
                 //  debug output
                 debugRawValue.setText("value: " + value.toString());
             }
