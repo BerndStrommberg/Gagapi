@@ -44,7 +44,7 @@ public class MainActivity extends AppCompatActivity {
             public void run() {
 
                 gravTextView.setText(gravityListener.getSensorSampleProcessor().valueMean.toString());
-                handler.postDelayed(this, 3000);
+                handler.postDelayed(this, 1250);
                 SendDataToServer(GetHTTPRequestData());
 
             }
@@ -78,7 +78,7 @@ public class MainActivity extends AppCompatActivity {
 
 // Instantiate the RequestQueue.
         RequestQueue queue = Volley.newRequestQueue(this);
-        String url ="http://141.22.94.47:8080/?volume=" + Data; // + ID
+        String url ="http://192.168.88.254:8080/?volume=" + Data; // + ID
 
 // Request a string response from the provided URL.
         StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
@@ -138,48 +138,79 @@ public class MainActivity extends AppCompatActivity {
         gravityListener =  new AdvancedSensorEventListener("", graphGrav, null, null, null);
     }
 
+    final int SampleRate = 20000; //in microseconds
     void RegisterSensorListeners()
     {
-        mSensorManager.registerListener(gyroListener, sensorGyro, SensorManager.SENSOR_DELAY_FASTEST);
-        mSensorManager.registerListener(accelerationListener, sensorAcceleration, SensorManager.SENSOR_DELAY_FASTEST);
-        mSensorManager.registerListener(gravityListener, sensorGravity, SensorManager.SENSOR_DELAY_FASTEST);
+        mSensorManager.registerListener(gyroListener, sensorGyro, SampleRate);
+        mSensorManager.registerListener(accelerationListener, sensorAcceleration, SampleRate);
+        mSensorManager.registerListener(gravityListener, sensorGravity, SampleRate);
     }
 
-    String GetHTTPRequestData()
+    class RequestBuilder
     {
         StringBuilder sb = new StringBuilder();
+        public RequestBuilder(){}
 
-        AdvancedSensorEventListener.SensorSampleProcessor acc = accelerationListener.getSensorSampleProcessor();
-        AdvancedSensorEventListener.SensorSampleProcessor gyro = accelerationListener.getSensorSampleProcessor();
-        AdvancedSensorEventListener.SensorSampleProcessor grav = accelerationListener.getSensorSampleProcessor();
-        sb.append(acc.valueMean.x).append(","); // tbodyaccmeanx
-        sb.append(acc.valueMean.y).append(","); // tbodyaccmeany
-        sb.append(acc.valueMean.z).append(","); // tbodyaccmeanz
+        public void AppendValue(float value, float minRange, float maxRange)
+        {
+            float normalizedValue = (value - minRange) / (maxRange - minRange) * (1-(-1)) + (-1);
+            sb.append(normalizedValue).append(",");
+        }
 
-        sb.append(grav.valueMean.x).append(","); // tgravityaccmeanx
-        sb.append(grav.valueMean.y).append(","); // tgravityaccmeany
-        sb.append(grav.valueMean.z).append(","); // tgravityaccmeanz
+        public void AppendValueFinal(float value, float minRange, float maxRange)
+        {
+            float normalizedValue = (value - minRange) / (maxRange - minRange) * (1-(-1)) + (-1);
+            sb.append(normalizedValue);
+        }
 
-        sb.append(grav.jerkMean.x).append(","); // tgravityaccjerkmeanx
-        sb.append(grav.jerkMean.y).append(","); // tgravityaccjerkmeany
-        sb.append(grav.jerkMean.z).append(","); // tgravityaccjerkmeanz
+        public String GetString()
+        {
+            return sb.toString();
+        }
+        public void Clear()
+        {
+            sb.setLength(0);
+        }
+    }
 
-        sb.append(gyro.valueMean.x).append(","); // tbodygyromeanx
-        sb.append(gyro.valueMean.y).append(","); // tbodygyromeany
-        sb.append(gyro.valueMean.z).append(","); // tbodygyromeanz
+    RequestBuilder requestBuilder = new RequestBuilder();
+    String GetHTTPRequestData()
+    {
 
-        sb.append(gyro.jerkMean.x).append(","); // tbodygyrojerkmeanx
-        sb.append(gyro.jerkMean.y).append(","); // tbodygyrojerkmeany
-        sb.append(gyro.jerkMean.z).append(","); // tbodygyrojerkmeanz
+        AdvancedSensorEventListener.SensorSampleProcessor body = accelerationListener.getSensorSampleProcessor();
+        AdvancedSensorEventListener.SensorSampleProcessor bodyGyro = gyroListener.getSensorSampleProcessor();
+        AdvancedSensorEventListener.SensorSampleProcessor grav = gravityListener.getSensorSampleProcessor();
+        //tbodyaccmeanx	tbodyaccmeany	tbodyaccmeanz
 
-        sb.append(acc.valueMean.length()).append(","); // tbodyaccmagmean
-        sb.append(grav.valueMean.length()).append(","); // tgravityaccmagmean
-        sb.append(acc.jerkMean.length()).append(","); // tbodyaccjerkmagmean
+        requestBuilder.Clear();
+        requestBuilder.AppendValue(body.valueMean.x,-1.04f, 10.22f); // tbodyaccmeanx
+        requestBuilder.AppendValue(body.valueMean.y,-1.72f, 4.62f);; // tbodyaccmeany
+        requestBuilder.AppendValue(body.valueMean.z,-2.52f, 9.64f);; // tbodyaccmeanz
 
-        sb.append(gyro.valueMean.length()).append(","); // tbodygyromagmean
-        sb.append(gyro.valueMean.length()).append(","); // tbodygyrojerkmagmean
+        requestBuilder.AppendValue(grav.valueMean.x,-0.96f, 9.76f); // tgravityaccmeanx
+        requestBuilder.AppendValue(grav.valueMean.y,-1.88f, 4.86f); // tgravityaccmeany
+        requestBuilder.AppendValue(grav.valueMean.z,-2.38f, 9.63f); // tgravityaccmeanz
 
-        return sb.toString();
+        requestBuilder.AppendValue(body.jerkMean.x,-4.91f, 0.11f  ); // tbodyaccjerkmeanx
+        requestBuilder.AppendValue(body.jerkMean.y,-0.06f, 0.09f  ); // tbodyaccjerkmeanx
+        requestBuilder.AppendValue(body.jerkMean.z,-0.13f, 0.60f  ); // tbodyaccjerkmeanx
+
+        requestBuilder.AppendValue(bodyGyro.valueMean.x, -1.22f, 1.57f); // tbodygyromeanx
+        requestBuilder.AppendValue(bodyGyro.valueMean.y, -0.31f, 0.81f); // tbodygyromeany
+        requestBuilder.AppendValue(bodyGyro.valueMean.z, -0.5f, 0.37f); // tbodygyromeanz
+
+        requestBuilder.AppendValue(bodyGyro.jerkMean.x, -0.24f, 0.02f); // tbodygyrojerkmeanx
+        requestBuilder.AppendValue(bodyGyro.jerkMean.y, -0.01f, 0.11f); // tbodygyrojerkmeany
+        requestBuilder.AppendValue(bodyGyro.jerkMean.z, -0.02f, 0.03f); // tbodygyrojerkmeanz
+
+        requestBuilder.AppendValue(body.valueMean.length(), 4.95f, 10.27f); // tbodyaccmagmean
+        requestBuilder.AppendValue(grav.valueMean.length(), 6.85f, 9.81f); // tgravityaccmagmean
+        requestBuilder.AppendValue(body.jerkMean.length(), 0f, 4.95f); // tbodyaccjerkmagmean
+
+        requestBuilder.AppendValue(bodyGyro.valueMean.length(), 0f, 1.78f); // tbodygyromagmean
+        requestBuilder.AppendValueFinal(bodyGyro.jerkMean.length(), 0f, 0.26f); // tbodygyrojerkmagmean
+
+        return requestBuilder.GetString();
         //fbodyaccmeanx
         //fbodyaccmeany
         //fbodyaccmeanz

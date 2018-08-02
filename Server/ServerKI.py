@@ -53,7 +53,12 @@ class S(BaseHTTPRequestHandler):
         print(input.shape)
         print(input)
         realInput = input.reshape((1,20))
-        
+        if(any(any(x < -1 or x > 1 for x in array) for array in realInput)):
+        	print("DATA outside [-1,1] !")
+        else:
+        	print("DATA ALRIGHT")
+
+
         
         print("Reshaped Input")
         print(realInput.shape)
