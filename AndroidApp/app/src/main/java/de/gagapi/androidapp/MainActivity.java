@@ -22,11 +22,21 @@ public class MainActivity extends AppCompatActivity {
     Handler handler;
     GraphView graphAcc, graphGrav, graphGyro;
 
+    TextView serverIP;
     TextView gravTextView;
+    SharedPreferences userPref;
+    SharedPreferences.Editor userPrefEditor;
+    final String SERVER_IP_PREF = "serverIP";
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        userPref = getSharedPreferences("pref", 0);
+        userPrefEditor = userPref.edit();
+
+        serverIP = (TextView) findViewById(R.id.serverAdress);
+        serverIP.setText(userPref.getString(SERVER_IP_PREF, ""));
 
 
         graphAcc = SetupGraphView((GraphView) findViewById(R.id.graphAcc));
@@ -45,7 +55,10 @@ public class MainActivity extends AppCompatActivity {
 
                 gravTextView.setText(gravityListener.getSensorSampleProcessor().valueMean.toString());
                 handler.postDelayed(this, 1250);
-                SendDataToServer(GetHTTPRequestData());
+
+                userPrefEditor.putString(SERVER_IP_PREF, serverIP.getText().toString());
+                userPrefEditor.commit();
+                SendDataToServer(serverIP.getText().toString(), GetHTTPRequestData());
 
             }
         };
@@ -71,14 +84,14 @@ public class MainActivity extends AppCompatActivity {
         return graph;
     }
 
-    void SendDataToServer(String Data)
+    void SendDataToServer(String Adress, String Data)
     {
         final TextView mTextView = (TextView) findViewById(R.id.debugRequestResponse);
 // ...
 
 // Instantiate the RequestQueue.
         RequestQueue queue = Volley.newRequestQueue(this);
-        String url ="http://192.168.88.254:8080/?volume=" + Data; // + ID
+        String url = "http://" + Adress + "/?action=evaluate&data=" + Data; // + ID
 
 // Request a string response from the provided URL.
         StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
@@ -154,13 +167,13 @@ public class MainActivity extends AppCompatActivity {
         public void AppendValue(float value, float minRange, float maxRange)
         {
             float normalizedValue = (value - minRange) / (maxRange - minRange) * (1-(-1)) + (-1);
-            sb.append(normalizedValue).append(",");
+            sb.append(value).append(",");
         }
 
         public void AppendValueFinal(float value, float minRange, float maxRange)
         {
             float normalizedValue = (value - minRange) / (maxRange - minRange) * (1-(-1)) + (-1);
-            sb.append(normalizedValue);
+            sb.append(value);
         }
 
         public String GetString()

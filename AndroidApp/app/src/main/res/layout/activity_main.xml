@@ -16,6 +16,16 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
+            <EditText
+                android:id="@+id/serverAdress"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ems="10"
+                android:hint="Server IP + Port"
+                android:inputType="textPersonName"
+                tools:layout_editor_absoluteX="29dp"
+                tools:layout_editor_absoluteY="0dp" />
+
             <TextView
                 android:id="@+id/debugRequestResponse"
                 android:layout_width="match_parent"
