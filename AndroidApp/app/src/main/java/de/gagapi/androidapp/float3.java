@@ -2,6 +2,9 @@ package de.gagapi.androidapp;
 
 import android.support.annotation.NonNull;
 
+/**
+ * Represents a Vector of 3 Components
+ */
 class float3 implements Comparable<float3>
 {
     private static final float3 Zero = new float3(0,0,0);
@@ -16,6 +19,10 @@ class float3 implements Comparable<float3>
         this.z = z;
     }
 
+    /**
+     * Copy's the values from the reference float3
+     * @param reference
+     */
     public float3(float3 reference)
     {
         this.x = reference.x;
@@ -56,6 +63,10 @@ class float3 implements Comparable<float3>
         return this;
     }
 
+    /**
+     *
+     * @return Euclidian Length
+     */
     public float length()
     {
         return (float) Math.sqrt(x * x + y * y + z * z);

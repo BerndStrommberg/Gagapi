@@ -32,6 +32,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        // read settings
         userPref = getSharedPreferences("pref", 0);
         userPrefEditor = userPref.edit();
 
@@ -39,10 +40,9 @@ public class MainActivity extends AppCompatActivity {
         serverIP.setText(userPref.getString(SERVER_IP_PREF, ""));
 
 
+        // find and setup UI graphs
         graphAcc = SetupGraphView((GraphView) findViewById(R.id.graphAcc));
         graphGrav = SetupGraphView((GraphView) findViewById(R.id.graphGrav));
-      //  graphGrav.getViewport().setMinY(-10);
-     //   graphGrav.getViewport().setMaxY(10);
         graphGyro = SetupGraphView((GraphView) findViewById(R.id.graphGyro));
 
         gravTextView = (TextView)  findViewById(R.id.gravOut);
@@ -53,22 +53,17 @@ public class MainActivity extends AppCompatActivity {
         final Runnable r = new Runnable() {
             public void run() {
 
-                gravTextView.setText(gravityListener.getSensorSampleProcessor().valueMean.toString());
-                handler.postDelayed(this, 1250);
+                gravTextView.setText(gravityListener.getSensorSampleProcessor().valueMean.toString()); // set raw value from gravity sensor, not really important
 
-                userPrefEditor.putString(SERVER_IP_PREF, serverIP.getText().toString());
-                userPrefEditor.commit();
+                handler.postDelayed(this, 1250); // wait 1250 ms
+
+                userPrefEditor.putString(SERVER_IP_PREF, serverIP.getText().toString()); // remember the current server adress for futher use
+                userPrefEditor.commit(); // save settings
                 SendDataToServer(serverIP.getText().toString(), GetHTTPRequestData());
-
             }
         };
 
         handler.postDelayed(r, 1);
-        // outline:
-        // if 2.5 sec elapsed
-        //      send data with http GET and ID
-        //      read response
-        //      use response as new ID
     }
 
     static GraphView SetupGraphView(GraphView graph)
@@ -135,6 +130,9 @@ public class MainActivity extends AppCompatActivity {
     //    fBodyGyroMag
     //    fBodyGyroJerkMag
 
+    /**
+     * Sets up the sensorListeners
+     */
     void InitalizeSensorListeners()
     {
         mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
@@ -152,6 +150,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     final int SampleRate = 20000; //in microseconds
+
+    /**
+     * Registers the sensor listeners, aka start them
+     */
     void RegisterSensorListeners()
     {
         mSensorManager.registerListener(gyroListener, sensorGyro, SampleRate);
@@ -159,21 +161,40 @@ public class MainActivity extends AppCompatActivity {
         mSensorManager.registerListener(gravityListener, sensorGravity, SampleRate);
     }
 
+    /**
+     * Helper class to build the server request string.
+     */
     class RequestBuilder
     {
+        final boolean NORMALIZE_VALUES = false;
         StringBuilder sb = new StringBuilder();
         public RequestBuilder(){}
 
         public void AppendValue(float value, float minRange, float maxRange)
         {
-            float normalizedValue = (value - minRange) / (maxRange - minRange) * (1-(-1)) + (-1);
-            sb.append(value).append(",");
+            if(NORMALIZE_VALUES)
+            {
+                float normalizedValue = (value - minRange) / (maxRange - minRange) * (1-(-1)) + (-1);
+                sb.append(normalizedValue).append(",");
+            }
+            else
+            {
+                sb.append(value).append(",");
+            }
+
         }
 
         public void AppendValueFinal(float value, float minRange, float maxRange)
         {
-            float normalizedValue = (value - minRange) / (maxRange - minRange) * (1-(-1)) + (-1);
-            sb.append(value);
+            if(NORMALIZE_VALUES)
+            {
+                float normalizedValue = (value - minRange) / (maxRange - minRange) * (1-(-1)) + (-1);
+                sb.append(normalizedValue);
+            }
+            else
+            {
+                sb.append(value);
+            }
         }
 
         public String GetString()

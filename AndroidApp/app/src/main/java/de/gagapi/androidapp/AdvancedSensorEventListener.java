@@ -31,6 +31,9 @@ class AdvancedSensorEventListener implements SensorEventListener
     {
         this.graph = graph;
         sensorSampleProcessor = new SensorSampleProcessor(filterX, filterY, filterZ);
+
+        // initalize graph/ploting related classes
+        // this is actually not essential for the AdvancedSensorEventListener to work
         graphSeriesX = new LineGraphSeries();
         graphSeriesX.setTitle(title + "x");
         graphSeriesX.setColor(Color.RED);
@@ -74,6 +77,9 @@ class AdvancedSensorEventListener implements SensorEventListener
     long tPrevious = -1;
 
 
+    /**
+     * Processes a series of data and returns f.e. the median value.
+     */
     static class SensorSampleProcessor
     {
         static float3 getMedian(float3[] values)
@@ -157,11 +163,12 @@ class AdvancedSensorEventListener implements SensorEventListener
     int graphIndex = 0;
 
 
+    final boolean SLIDING_WINDOW = false;
     @Override
     public void onSensorChanged(SensorEvent sensorEvent) {
         float3 value = new float3(sensorEvent.values[0], sensorEvent.values[1], sensorEvent.values[2]);
 
-        // store rotation inside list
+        // store sensor value in list
         accumulatedValues.add(value);
 
         long tCurrent = SystemClock.elapsedRealtime();
@@ -169,17 +176,25 @@ class AdvancedSensorEventListener implements SensorEventListener
         float elapsedSeconds = tDelta / 1000.0f;
 
 
+
         if(elapsedSeconds > SENDING_RATE_SECONDS)
         {
+            // this marks the end of a sample window.
+            // we now proccess all the sample we've collected over the time defined in SENDING_RATE_SECONDS
             tPrevious = tCurrent;
+
             sensorSampleProcessor.Process(accumulatedValues);
             accumulatedValues.clear();
-         //   int accumSize = accumulatedValues.size(); //remove half of the data
-         //   for (int i = 0; i < accumSize / 2; i++) {
-        //        accumulatedValues.remove(0);
-          //  }
 
+            if(SLIDING_WINDOW)
+            {
+                   int accumSize = accumulatedValues.size(); //remove half of the data
+                   for (int i = 0; i < accumSize / 2; i++) {
+                        accumulatedValues.remove(0);
+                  }
+            }
 
+            // plot data to a graph, if one is provided
             if(graph != null)
             {
                 graphSeriesX.appendData(new DataPoint(graphIndex, sensorSampleProcessor.valueMedian.x), true, 40);
@@ -191,14 +206,13 @@ class AdvancedSensorEventListener implements SensorEventListener
                 graphIndex++;
             }else
             {
+                //else, assume textfields are set
                 debugMedianValue.setText("median: " + sensorSampleProcessor.valueMedian.toString());
                 debugAverageMag.setText("meanMag: " + Float.toString(sensorSampleProcessor.valueMean.length()));
                 //  debug output
                 debugRawValue.setText("value: " + value.toString());
             }
         }
-
-
     }
 
     @Override
