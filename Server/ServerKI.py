@@ -27,6 +27,14 @@ labels = {
     6 : "LAYING" 
 }
 
+
+walking = 0
+sitting = 0
+laying = 0
+upstairs = 0
+downstairs = 0
+staying = 0
+
 class S(BaseHTTPRequestHandler):
     def _set_response(self):
         self.send_response(200)
@@ -36,38 +44,63 @@ class S(BaseHTTPRequestHandler):
     def do_GET(self):
         #logging.info("GET request,\nPath: %s\nHeaders:\n%s\n", str(self.path), str(self.headers))
         path = self.path
-        index = path.find('=') + 1
-        data = path[index:]
+        arguments = path.split("&")
 
-
-        """ print("---This is the recieved data---")
-        print(data)
- """
+        action = arguments[0].split("=")[1]
+        data = arguments[1].split("=")[1]
         
+
+
+
+
+        #index = path.find('=') + 1
+        #data = path[index:]
+
+        #print("---This is the recieved path---")
+        #print(path)
+        #print("---This is the recieved data---")
+        #print(data)
+        #print("Action:" + str(action))
+        #print("Data: " + str(data))
+
+
+        if (action == "evaluate"):
+            #print("---splitting the data by commas---")
+            input = np.fromstring(data, dtype = float, sep=",")
+            #print(input.shape)
+            #print(input)
+            realInput = input.reshape((1,20))
+        
+        
+            #print("Reshaped Input")
+            #print(realInput.shape)
+            #print(realInput)
+            output = model.predict(realInput)
+            #print("---Generatet output---")
+            #print(output)
+
+            activity = labels[np.argmax(output)+1]
+            
+            if (activity == "WALKING"):
+                global walking
+                walking += 1
+
+            elif(activity =="LAYING"):
+                global laying    
+                laying += 1
+            
+            print(activity)
+        
+            file = open("sitting_data.csv", "a")
+            file.write("\n")
+            file.write(data)
+            #print("wrote data")
+            file.close()
+        
+        elif (action == "present"):
+            print("")
+
  
-        print("---This is the type of the data---")
-        print(type(data))
-
-        print("---splitting the data by commas---")
-        input = np.fromstring(data, dtype = float, sep=",")
-        print(input.shape)
-        print(input)
-        realInput = input.reshape((1,20))
-        
-        
-        print("Reshaped Input")
-        print(realInput.shape)
-        print(realInput)
-        output = model.predict(realInput)
-        print("---Generatet output---")
-        print(output)
-        print(labels[np.argmax(output)+1])
-        
-        file = open("sitting_data.csv", "a")
-        file.write("\n")
-        file.write(data)
-        print("wrote data")
-        file.close()
 
 
   
