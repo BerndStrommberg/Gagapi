@@ -71,6 +71,7 @@ class S(BaseHTTPRequestHandler):
             #print(input)
             realInput = input.reshape((1,20))
         
+<<<<<<< HEAD
         
             #print("Reshaped Input")
             #print(realInput.shape)
@@ -90,6 +91,23 @@ class S(BaseHTTPRequestHandler):
                 laying += 1
             
             print(activity)
+=======
+ 
+        print("---This is the type of the data---")
+        print(type(data))
+
+        print("---splitting the data by commas---")
+        input = np.fromstring(data, dtype = float, sep=",")
+        print(input.shape)
+        print(input)
+        realInput = input.reshape((1,20))
+        if(any(any(x < -1 or x > 1 for x in array) for array in realInput)):
+        	print("DATA outside [-1,1] !")
+        else:
+        	print("DATA ALRIGHT")
+
+
+>>>>>>> 5d3f208edb668a3012351a6e1c8bc3ebcafd058f
         
             file = open("sitting_data.csv", "a")
             file.write("\n")

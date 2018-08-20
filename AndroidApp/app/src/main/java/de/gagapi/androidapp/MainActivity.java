@@ -22,17 +22,27 @@ public class MainActivity extends AppCompatActivity {
     Handler handler;
     GraphView graphAcc, graphGrav, graphGyro;
 
+    TextView serverIP;
     TextView gravTextView;
+    SharedPreferences userPref;
+    SharedPreferences.Editor userPrefEditor;
+    final String SERVER_IP_PREF = "serverIP";
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        // read settings
+        userPref = getSharedPreferences("pref", 0);
+        userPrefEditor = userPref.edit();
 
+        serverIP = (TextView) findViewById(R.id.serverAdress);
+        serverIP.setText(userPref.getString(SERVER_IP_PREF, ""));
+
+
+        // find and setup UI graphs
         graphAcc = SetupGraphView((GraphView) findViewById(R.id.graphAcc));
         graphGrav = SetupGraphView((GraphView) findViewById(R.id.graphGrav));
-      //  graphGrav.getViewport().setMinY(-10);
-     //   graphGrav.getViewport().setMaxY(10);
         graphGyro = SetupGraphView((GraphView) findViewById(R.id.graphGyro));
 
         gravTextView = (TextView)  findViewById(R.id.gravOut);
@@ -43,19 +53,17 @@ public class MainActivity extends AppCompatActivity {
         final Runnable r = new Runnable() {
             public void run() {
 
-                gravTextView.setText(gravityListener.getSensorSampleProcessor().valueMean.toString());
-                handler.postDelayed(this, 3000);
-                SendDataToServer(GetHTTPRequestData());
+                gravTextView.setText(gravityListener.getSensorSampleProcessor().valueMean.toString()); // set raw value from gravity sensor, not really important
 
+                handler.postDelayed(this, 1250); // wait 1250 ms
+
+                userPrefEditor.putString(SERVER_IP_PREF, serverIP.getText().toString()); // remember the current server adress for futher use
+                userPrefEditor.commit(); // save settings
+                SendDataToServer(serverIP.getText().toString(), GetHTTPRequestData());
             }
         };
 
         handler.postDelayed(r, 1);
-        // outline:
-        // if 2.5 sec elapsed
-        //      send data with http GET and ID
-        //      read response
-        //      use response as new ID
     }
 
     static GraphView SetupGraphView(GraphView graph)
@@ -71,14 +79,14 @@ public class MainActivity extends AppCompatActivity {
         return graph;
     }
 
-    void SendDataToServer(String Data)
+    void SendDataToServer(String Adress, String Data)
     {
         final TextView mTextView = (TextView) findViewById(R.id.debugRequestResponse);
 // ...
 
 // Instantiate the RequestQueue.
         RequestQueue queue = Volley.newRequestQueue(this);
-        String url ="http://141.22.94.47:8080/?volume=" + Data; // + ID
+        String url = "http://" + Adress + "/?action=evaluate&data=" + Data; // + ID
 
 // Request a string response from the provided URL.
         StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
@@ -122,6 +130,9 @@ public class MainActivity extends AppCompatActivity {
     //    fBodyGyroMag
     //    fBodyGyroJerkMag
 
+    /**
+     * Sets up the sensorListeners
+     */
     void InitalizeSensorListeners()
     {
         mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
@@ -138,48 +149,102 @@ public class MainActivity extends AppCompatActivity {
         gravityListener =  new AdvancedSensorEventListener("", graphGrav, null, null, null);
     }
 
+    final int SampleRate = 20000; //in microseconds
+
+    /**
+     * Registers the sensor listeners, aka start them
+     */
     void RegisterSensorListeners()
     {
-        mSensorManager.registerListener(gyroListener, sensorGyro, SensorManager.SENSOR_DELAY_FASTEST);
-        mSensorManager.registerListener(accelerationListener, sensorAcceleration, SensorManager.SENSOR_DELAY_FASTEST);
-        mSensorManager.registerListener(gravityListener, sensorGravity, SensorManager.SENSOR_DELAY_FASTEST);
+        mSensorManager.registerListener(gyroListener, sensorGyro, SampleRate);
+        mSensorManager.registerListener(accelerationListener, sensorAcceleration, SampleRate);
+        mSensorManager.registerListener(gravityListener, sensorGravity, SampleRate);
     }
 
+    /**
+     * Helper class to build the server request string.
+     */
+    class RequestBuilder
+    {
+        final boolean NORMALIZE_VALUES = false;
+        StringBuilder sb = new StringBuilder();
+        public RequestBuilder(){}
+
+        public void AppendValue(float value, float minRange, float maxRange)
+        {
+            if(NORMALIZE_VALUES)
+            {
+                float normalizedValue = (value - minRange) / (maxRange - minRange) * (1-(-1)) + (-1);
+                sb.append(normalizedValue).append(",");
+            }
+            else
+            {
+                sb.append(value).append(",");
+            }
+
+        }
+
+        public void AppendValueFinal(float value, float minRange, float maxRange)
+        {
+            if(NORMALIZE_VALUES)
+            {
+                float normalizedValue = (value - minRange) / (maxRange - minRange) * (1-(-1)) + (-1);
+                sb.append(normalizedValue);
+            }
+            else
+            {
+                sb.append(value);
+            }
+        }
+
+        public String GetString()
+        {
+            return sb.toString();
+        }
+        public void Clear()
+        {
+            sb.setLength(0);
+        }
+    }
+
+    RequestBuilder requestBuilder = new RequestBuilder();
     String GetHTTPRequestData()
     {
-        StringBuilder sb = new StringBuilder();
 
-        AdvancedSensorEventListener.SensorSampleProcessor acc = accelerationListener.getSensorSampleProcessor();
-        AdvancedSensorEventListener.SensorSampleProcessor gyro = accelerationListener.getSensorSampleProcessor();
-        AdvancedSensorEventListener.SensorSampleProcessor grav = accelerationListener.getSensorSampleProcessor();
-        sb.append(acc.valueMean.x).append(","); // tbodyaccmeanx
-        sb.append(acc.valueMean.y).append(","); // tbodyaccmeany
-        sb.append(acc.valueMean.z).append(","); // tbodyaccmeanz
+        AdvancedSensorEventListener.SensorSampleProcessor body = accelerationListener.getSensorSampleProcessor();
+        AdvancedSensorEventListener.SensorSampleProcessor bodyGyro = gyroListener.getSensorSampleProcessor();
+        AdvancedSensorEventListener.SensorSampleProcessor grav = gravityListener.getSensorSampleProcessor();
+        //tbodyaccmeanx	tbodyaccmeany	tbodyaccmeanz
 
-        sb.append(grav.valueMean.x).append(","); // tgravityaccmeanx
-        sb.append(grav.valueMean.y).append(","); // tgravityaccmeany
-        sb.append(grav.valueMean.z).append(","); // tgravityaccmeanz
+        requestBuilder.Clear();
+        requestBuilder.AppendValue(body.valueMean.x,-1.04f, 10.22f); // tbodyaccmeanx
+        requestBuilder.AppendValue(body.valueMean.y,-1.72f, 4.62f);; // tbodyaccmeany
+        requestBuilder.AppendValue(body.valueMean.z,-2.52f, 9.64f);; // tbodyaccmeanz
 
-        sb.append(grav.jerkMean.x).append(","); // tgravityaccjerkmeanx
-        sb.append(grav.jerkMean.y).append(","); // tgravityaccjerkmeany
-        sb.append(grav.jerkMean.z).append(","); // tgravityaccjerkmeanz
+        requestBuilder.AppendValue(grav.valueMean.x,-0.96f, 9.76f); // tgravityaccmeanx
+        requestBuilder.AppendValue(grav.valueMean.y,-1.88f, 4.86f); // tgravityaccmeany
+        requestBuilder.AppendValue(grav.valueMean.z,-2.38f, 9.63f); // tgravityaccmeanz
 
-        sb.append(gyro.valueMean.x).append(","); // tbodygyromeanx
-        sb.append(gyro.valueMean.y).append(","); // tbodygyromeany
-        sb.append(gyro.valueMean.z).append(","); // tbodygyromeanz
+        requestBuilder.AppendValue(body.jerkMean.x,-4.91f, 0.11f  ); // tbodyaccjerkmeanx
+        requestBuilder.AppendValue(body.jerkMean.y,-0.06f, 0.09f  ); // tbodyaccjerkmeanx
+        requestBuilder.AppendValue(body.jerkMean.z,-0.13f, 0.60f  ); // tbodyaccjerkmeanx
 
-        sb.append(gyro.jerkMean.x).append(","); // tbodygyrojerkmeanx
-        sb.append(gyro.jerkMean.y).append(","); // tbodygyrojerkmeany
-        sb.append(gyro.jerkMean.z).append(","); // tbodygyrojerkmeanz
+        requestBuilder.AppendValue(bodyGyro.valueMean.x, -1.22f, 1.57f); // tbodygyromeanx
+        requestBuilder.AppendValue(bodyGyro.valueMean.y, -0.31f, 0.81f); // tbodygyromeany
+        requestBuilder.AppendValue(bodyGyro.valueMean.z, -0.5f, 0.37f); // tbodygyromeanz
 
-        sb.append(acc.valueMean.length()).append(","); // tbodyaccmagmean
-        sb.append(grav.valueMean.length()).append(","); // tgravityaccmagmean
-        sb.append(acc.jerkMean.length()).append(","); // tbodyaccjerkmagmean
+        requestBuilder.AppendValue(bodyGyro.jerkMean.x, -0.24f, 0.02f); // tbodygyrojerkmeanx
+        requestBuilder.AppendValue(bodyGyro.jerkMean.y, -0.01f, 0.11f); // tbodygyrojerkmeany
+        requestBuilder.AppendValue(bodyGyro.jerkMean.z, -0.02f, 0.03f); // tbodygyrojerkmeanz
 
-        sb.append(gyro.valueMean.length()).append(","); // tbodygyromagmean
-        sb.append(gyro.valueMean.length()).append(","); // tbodygyrojerkmagmean
+        requestBuilder.AppendValue(body.valueMean.length(), 4.95f, 10.27f); // tbodyaccmagmean
+        requestBuilder.AppendValue(grav.valueMean.length(), 6.85f, 9.81f); // tgravityaccmagmean
+        requestBuilder.AppendValue(body.jerkMean.length(), 0f, 4.95f); // tbodyaccjerkmagmean
 
-        return sb.toString();
+        requestBuilder.AppendValue(bodyGyro.valueMean.length(), 0f, 1.78f); // tbodygyromagmean
+        requestBuilder.AppendValueFinal(bodyGyro.jerkMean.length(), 0f, 0.26f); // tbodygyrojerkmagmean
+
+        return requestBuilder.GetString();
         //fbodyaccmeanx
         //fbodyaccmeany
         //fbodyaccmeanz

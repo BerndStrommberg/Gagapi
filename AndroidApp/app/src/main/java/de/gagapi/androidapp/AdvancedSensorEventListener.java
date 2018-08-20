@@ -31,6 +31,9 @@ class AdvancedSensorEventListener implements SensorEventListener
     {
         this.graph = graph;
         sensorSampleProcessor = new SensorSampleProcessor(filterX, filterY, filterZ);
+
+        // initalize graph/ploting related classes
+        // this is actually not essential for the AdvancedSensorEventListener to work
         graphSeriesX = new LineGraphSeries();
         graphSeriesX.setTitle(title + "x");
         graphSeriesX.setColor(Color.RED);
@@ -71,10 +74,12 @@ class AdvancedSensorEventListener implements SensorEventListener
     SensorSampleProcessor sensorSampleProcessor;
     final float SENDING_RATE_SECONDS = 2.5f;
 
-    float3 previousValue = new float3(0,0,0);
     long tPrevious = -1;
 
-    // obtains median value of the supplied list
+
+    /**
+     * Processes a series of data and returns f.e. the median value.
+     */
     static class SensorSampleProcessor
     {
         static float3 getMedian(float3[] values)
@@ -82,26 +87,27 @@ class AdvancedSensorEventListener implements SensorEventListener
             Arrays.sort(values);
             int arrayLength = values.length;
             int middle = arrayLength / 2;
-            if (values.length%2 == 1) {
+            if (values.length % 2 == 1) {
                 return values[middle];
             } else {
-                return (values[middle-1].add(values[middle])).mul(0.5f);
+                return (new float3(values[middle-1]).add(values[middle])).mul(0.5f);
             }
         }
 
         static float3 getMean(float3[] values)
         {
-            float3 mean = values[0];
+            float3 mean = new float3(values[0]);
             for (int i = 1; i < values.length ; i++) {
                 mean = mean.add(values[i]);
             }
             return mean.mul(1f / (float)values.length);
         }
-        public float3 valueMedian = float3.Zero, valueMean = float3.Zero;
+        public float3 valueMedian = float3.Zero(), valueMean = float3.Zero();
 
-        float3 preValue = float3.Zero;
-        public float3 jerkMedian = float3.Zero, jerkMean = float3.Zero;
+        float3 preValue = float3.Zero();
+        public float3 jerkMedian = float3.Zero(), jerkMean = float3.Zero();
         ArrayList<float3> jerkness = new ArrayList<>();
+
 
         public SensorSampleProcessor(Filter filterX, Filter filterY, Filter filterZ) {
             this.filterX = filterX;
@@ -136,12 +142,12 @@ class AdvancedSensorEventListener implements SensorEventListener
                 }
             }
 
-            // compute jerkness
+            // compute jerkness, which is the derivation (ableitung) over time, in this case
             jerkness.clear();
             for(int i = 0; i < sampleValuesArray.length; i++) {
-                float3 currentValue = sampleValuesArray[i];
-                jerkness.add(preValue.sub(currentValue));
-                preValue = currentValue;
+                float3 currentValue = new float3(sampleValuesArray[i]);
+                jerkness.add(new float3(preValue.sub(currentValue)));
+                preValue = new float3(currentValue);
             }
 
             float3[] jerknessArray = new float3[jerkness.size()];
@@ -156,12 +162,13 @@ class AdvancedSensorEventListener implements SensorEventListener
     }
     int graphIndex = 0;
 
+
+    final boolean SLIDING_WINDOW = false;
     @Override
     public void onSensorChanged(SensorEvent sensorEvent) {
         float3 value = new float3(sensorEvent.values[0], sensorEvent.values[1], sensorEvent.values[2]);
 
-        previousValue = value;
-        // store rotation inside list
+        // store sensor value in list
         accumulatedValues.add(value);
 
         long tCurrent = SystemClock.elapsedRealtime();
@@ -169,16 +176,25 @@ class AdvancedSensorEventListener implements SensorEventListener
         float elapsedSeconds = tDelta / 1000.0f;
 
 
+
         if(elapsedSeconds > SENDING_RATE_SECONDS)
         {
+            // this marks the end of a sample window.
+            // we now proccess all the sample we've collected over the time defined in SENDING_RATE_SECONDS
             tPrevious = tCurrent;
+
             sensorSampleProcessor.Process(accumulatedValues);
-            int accumSize = accumulatedValues.size(); //remove half of the data
-            for (int i = 0; i < accumSize / 2; i++) {
-                accumulatedValues.remove(0);
+            accumulatedValues.clear();
+
+            if(SLIDING_WINDOW)
+            {
+                   int accumSize = accumulatedValues.size(); //remove half of the data
+                   for (int i = 0; i < accumSize / 2; i++) {
+                        accumulatedValues.remove(0);
+                  }
             }
 
-
+            // plot data to a graph, if one is provided
             if(graph != null)
             {
                 graphSeriesX.appendData(new DataPoint(graphIndex, sensorSampleProcessor.valueMedian.x), true, 40);
@@ -190,14 +206,13 @@ class AdvancedSensorEventListener implements SensorEventListener
                 graphIndex++;
             }else
             {
+                //else, assume textfields are set
                 debugMedianValue.setText("median: " + sensorSampleProcessor.valueMedian.toString());
                 debugAverageMag.setText("meanMag: " + Float.toString(sensorSampleProcessor.valueMean.length()));
                 //  debug output
                 debugRawValue.setText("value: " + value.toString());
             }
         }
-
-
     }
 
     @Override
