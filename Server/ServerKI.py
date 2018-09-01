@@ -16,15 +16,13 @@ mos_voice = "[MORITZ-COOL-VOICE]: "
 print(mos_voice + "Imported all dependencies")
 print(mos_voice + "keras version: " + str(keras.__version__))
 
-model = load_model("without_fouier_try.h5")
+model = load_model("myData.h5")
 print(mos_voice + "Model Loaded")
 labels = {
-    1 : "WALKING",
-    2 : "WALKING_UPSTAIRS",
-    3 : "WALKING_DOWNSTAIRS",
-    4 : "SITTING",
-    5 : "STANDING",
-    6 : "LAYING" 
+    1 : "Sitzen",
+    2 : "Stehen",
+    3 : "Laufen",
+    
 }
 
 
@@ -57,9 +55,9 @@ class S(BaseHTTPRequestHandler):
         #data = path[index:]
 
         #print("---This is the recieved path---")
-        #print(path)
+        print(path)
         #print("---This is the recieved data---")
-        #print(data)
+        print(data)
         #print("Action:" + str(action))
         #print("Data: " + str(data))
 
@@ -67,53 +65,37 @@ class S(BaseHTTPRequestHandler):
         if (action == "evaluate"):
             #print("---splitting the data by commas---")
             input = np.fromstring(data, dtype = float, sep=",")
-            #print(input.shape)
+            print(input.shape)
             #print(input)
             realInput = input.reshape((1,20))
         
-<<<<<<< HEAD
-        
+            
             #print("Reshaped Input")
-            #print(realInput.shape)
+            print(realInput.shape)
             #print(realInput)
             output = model.predict(realInput)
             #print("---Generatet output---")
-            #print(output)
-
-            activity = labels[np.argmax(output)+1]
             
-            if (activity == "WALKING"):
-                global walking
-                walking += 1
-
-            elif(activity =="LAYING"):
-                global laying    
-                laying += 1
-            
+            activity = labels[np.argmax(output) + 1]
+            print(output)
             print(activity)
-=======
- 
-        print("---This is the type of the data---")
-        print(type(data))
 
-        print("---splitting the data by commas---")
-        input = np.fromstring(data, dtype = float, sep=",")
-        print(input.shape)
-        print(input)
-        realInput = input.reshape((1,20))
-        if(any(any(x < -1 or x > 1 for x in array) for array in realInput)):
-        	print("DATA outside [-1,1] !")
-        else:
-        	print("DATA ALRIGHT")
+            #if (activity == "WALKING"):
+             #   global walking
+              #  walking += 1
 
-
->>>>>>> 5d3f208edb668a3012351a6e1c8bc3ebcafd058f
+            #elif(activity =="LAYING"):
+               # global laying    
+                #laying += 1
+            
+            #print(activity)
         
-            file = open("sitting_data.csv", "a")
-            file.write("\n")
-            file.write(data)
+            #file = open("staying_data_hosentasche2.csv", "a")
+            #file.write("\n")
+            #file.write(data)
             #print("wrote data")
-            file.close()
+            #file.close()
+            #print("Wrote Data")
         
         elif (action == "present"):
             print("")
