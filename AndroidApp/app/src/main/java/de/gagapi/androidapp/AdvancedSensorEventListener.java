@@ -34,30 +34,34 @@ class AdvancedSensorEventListener implements SensorEventListener
 
         // initalize graph/ploting related classes
         // this is actually not essential for the AdvancedSensorEventListener to work
-        graphSeriesX = new LineGraphSeries();
-        graphSeriesX.setTitle(title + "x");
-        graphSeriesX.setColor(Color.RED);
-        graph.addSeries(graphSeriesX);
+        if(graph != null)
+        {
+            graphSeriesX = new LineGraphSeries();
+            graphSeriesX.setTitle(title + "x");
+            graphSeriesX.setColor(Color.RED);
+            graph.addSeries(graphSeriesX);
 
-        graphSeriesY = new LineGraphSeries();
-        graphSeriesY.setTitle(title + "y");
-        graphSeriesY.setColor(Color.GREEN);
-        graph.addSeries(graphSeriesY);
+            graphSeriesY = new LineGraphSeries();
+            graphSeriesY.setTitle(title + "y");
+            graphSeriesY.setColor(Color.GREEN);
+            graph.addSeries(graphSeriesY);
 
-        graphSeriesZ = new LineGraphSeries();
-        graphSeriesZ.setTitle(title + "z");
-        graphSeriesZ.setColor(Color.BLUE);
-        graph.addSeries(graphSeriesZ);
+            graphSeriesZ = new LineGraphSeries();
+            graphSeriesZ.setTitle(title + "z");
+            graphSeriesZ.setColor(Color.BLUE);
+            graph.addSeries(graphSeriesZ);
 
-        medianMag = new LineGraphSeries();
-        medianMag.setTitle(title + "Mag.");
-        medianMag.setColor(Color.BLACK);
-        graph.addSeries(medianMag);
+            medianMag = new LineGraphSeries();
+            medianMag.setTitle(title + "Mag.");
+            medianMag.setColor(Color.BLACK);
+            graph.addSeries(medianMag);
 
-        medianJerk = new LineGraphSeries();
-        medianJerk.setTitle(title + "Jerk. ");
-        medianJerk.setColor(Color.YELLOW);
-        graph.addSeries(medianJerk);
+            medianJerk = new LineGraphSeries();
+            medianJerk.setTitle(title + "Jerk. ");
+            medianJerk.setColor(Color.YELLOW);
+            graph.addSeries(medianJerk);
+        }
+
     }
 
     GraphView graph = null;
@@ -175,8 +179,6 @@ class AdvancedSensorEventListener implements SensorEventListener
         long tDelta = tCurrent - tPrevious;
         float elapsedSeconds = tDelta / 1000.0f;
 
-
-
         if(elapsedSeconds > SENDING_RATE_SECONDS)
         {
             // this marks the end of a sample window.
@@ -206,11 +208,16 @@ class AdvancedSensorEventListener implements SensorEventListener
                 graphIndex++;
             }else
             {
-                //else, assume textfields are set
-                debugMedianValue.setText("median: " + sensorSampleProcessor.valueMedian.toString());
-                debugAverageMag.setText("meanMag: " + Float.toString(sensorSampleProcessor.valueMean.length()));
-                //  debug output
-                debugRawValue.setText("value: " + value.toString());
+                if(debugAverageJerk != null)
+
+                {
+                    //else, assume textfields are set
+                    debugMedianValue.setText("median: " + sensorSampleProcessor.valueMedian.toString());
+                    debugAverageMag.setText("meanMag: " + Float.toString(sensorSampleProcessor.valueMean.length()));
+                    //  debug output
+                    debugRawValue.setText("value: " + value.toString());
+                }
+
             }
         }
     }
