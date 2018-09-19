@@ -8,6 +8,7 @@ import numpy as np
 
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import logging
+import json
 
 
 
@@ -26,85 +27,72 @@ labels = {
 }
 
 
-walking = 0
-sitting = 0
-laying = 0
-upstairs = 0
-downstairs = 0
-staying = 0
+activity_stack = [2 for _ in range(10)]
+status = 2
+
+
+
+def write_data_to_file(path, data):
+    file = open(path, "a")
+    file.write(data)
+    file.close()
+    
+def average(activity_list):
+    return sum(activity_list)/len(activity_list)
+
+def update_activity_stack(data):
+    activity_stack.insert(0, data)
+    activity_stack.pop()
+    global status
+    status = average(activity_stack)
+    print("Status", status)
+
+
 
 class S(BaseHTTPRequestHandler):
+
     def _set_response(self):
         self.send_response(200)
-        self.send_header('Content-type', 'text/html')
+        self.send_header('Content-type', 'application/json')
         self.end_headers()
 
     def do_GET(self):
-        #logging.info("GET request,\nPath: %s\nHeaders:\n%s\n", str(self.path), str(self.headers))
+        
         path = self.path
         arguments = path.split("&")
+        try:
+            action = arguments[0].split("=")[1]
 
-        action = arguments[0].split("=")[1]
-        data = arguments[1].split("=")[1]
-        
+            if (action == "evaluate"):
+                data = arguments[1].split("=")[1]
+                input = np.fromstring(data, dtype = float, sep=",")
 
+                realInput = input.reshape((1,20))
+                        
+                output = model.predict(realInput)
+                activity = labels[np.argmax(output) + 1]
+                print("Activity" , activity)
+                update_activity_stack(np.argmax(output) + 1)
 
-
-
-        #index = path.find('=') + 1
-        #data = path[index:]
-
-        #print("---This is the recieved path---")
-        print(path)
-        #print("---This is the recieved data---")
-        print(data)
-        #print("Action:" + str(action))
-        #print("Data: " + str(data))
-
-
-        if (action == "evaluate"):
-            #print("---splitting the data by commas---")
-            input = np.fromstring(data, dtype = float, sep=",")
-            print(input.shape)
-            #print(input)
-            realInput = input.reshape((1,20))
-        
             
-            #print("Reshaped Input")
-            print(realInput.shape)
-            #print(realInput)
-            output = model.predict(realInput)
-            #print("---Generatet output---")
-            
-            activity = labels[np.argmax(output) + 1]
-            print(output)
-            print(activity)
+            elif (action == "present"):
+                print("Action: Present")
+                print("Status for sending ", status)
+                json_res = {
+                    "activity_num" : status,
+                    "activity_label" : labels[status]   
+                }
 
-            #if (activity == "WALKING"):
-             #   global walking
-              #  walking += 1
-
-            #elif(activity =="LAYING"):
-               # global laying    
-                #laying += 1
-            
-            #print(activity)
-        
-            #file = open("staying_data_hosentasche2.csv", "a")
-            #file.write("\n")
-            #file.write(data)
-            #print("wrote data")
-            #file.close()
-            #print("Wrote Data")
-        
-        elif (action == "present"):
-            print("")
+                print(json_res)
+                
+                res = json.dumps(json_res)
+                self._set_response()
+                self.wfile.write(res.encode())
+                
+        except IndexError:
+            print("There was a fault with the response")            
 
  
-
-
-  
-
 
 
 def run(server_class=HTTPServer, handler_class=S, port=8080):
