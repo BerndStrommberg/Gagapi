@@ -48,6 +48,7 @@ public class SensorTrackerService extends Service {
     private Sensor sensorGyro, sensorAcceleration, sensorGravity;
     private AdvancedSensorEventListener gyroListener, accelerationListener, gravityListener;
     Context contex;
+    public int i = 0;
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Toast.makeText(this,"Start Service",Toast.LENGTH_SHORT).show();
@@ -89,19 +90,19 @@ public class SensorTrackerService extends Service {
         userPrefEditor = userPref.edit();
 
         InitalizeSensorListeners();
+        RegisterSensorListeners();
         handler = new Handler();
+
 
         final Runnable r = new Runnable() {
             public void run() {
 
                 //gravTextView.setText(gravityListener.getSensorSampleProcessor().valueMean.toString()); // set raw value from gravity sensor, not really important
-
                 handler.postDelayed(this, 1250); // wait 1250 ms
-
                 String serverIP = userPref.getString(SERVER_IP_PREF, "");
-                userPrefEditor.putString(SERVER_IP_PREF, serverIP); // remember the current server adress for futher use
-                userPrefEditor.commit(); // save settings
                 SendDataToServer(serverIP, GetHTTPRequestData());
+             //   Toast.makeText(contex, "Tick " + i, Toast.LENGTH_SHORT).show();
+              //  i++;
             }
         };
 
@@ -216,7 +217,7 @@ public class SensorTrackerService extends Service {
                 }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
-                Toast.makeText(contex, error.getMessage(), Toast.LENGTH_SHORT).show();
+
               //  mTextView.setText(error.getMessage());
             }
         });

@@ -23,7 +23,7 @@
         <service
             android:name=".SensorTrackerService"
             android:enabled="true"
-            android:exported="true"></service>
+            android:exported="false"></service>
     </application>
 
 </manifest>
