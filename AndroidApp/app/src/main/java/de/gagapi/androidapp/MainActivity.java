@@ -5,6 +5,8 @@ import android.hardware.*;
 import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.widget.TextView;
 
 import com.android.volley.*;
@@ -23,9 +25,19 @@ public class MainActivity extends AppCompatActivity {
 
     TextView serverIP;
     TextView gravTextView;
+    TextView debugTV;
     SharedPreferences userPref;
     SharedPreferences.Editor userPrefEditor;
     final String SERVER_IP_PREF = "serverIP";
+
+    public static MainActivity instance;
+    public void SetDebugLabel(String c)
+    {
+        if(debugTV != null)
+        {
+            debugTV.setText(c);
+        }
+    }
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -40,6 +52,24 @@ public class MainActivity extends AppCompatActivity {
         serverIP = (TextView) findViewById(R.id.serverAdress);
         serverIP.setText(userPref.getString(SERVER_IP_PREF, ""));
 
+    debugTV = findViewById(R.id.debugRequestResponse);
+        serverIP.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                userPrefEditor.putString(SERVER_IP_PREF, s.toString());
+                userPrefEditor.commit();
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+
+            }
+        });
 
         // find and setup UI graphs
         graphAcc = SetupGraphView((GraphView) findViewById(R.id.graphAcc));
@@ -47,8 +77,6 @@ public class MainActivity extends AppCompatActivity {
         graphGyro = SetupGraphView((GraphView) findViewById(R.id.graphGyro));
 
         gravTextView = (TextView)  findViewById(R.id.gravOut);
-
-
     }
 
     static GraphView SetupGraphView(GraphView graph)
@@ -63,8 +91,6 @@ public class MainActivity extends AppCompatActivity {
 
         return graph;
     }
-
-
 
     //    tBodyAcc-XYZ
     //    tBodyAccJerk-XYZ
@@ -88,12 +114,24 @@ public class MainActivity extends AppCompatActivity {
     //    fBodyGyroMag
     //    fBodyGyroJerkMag
 
-
-
-
     @Override
     protected void onResume() {
         super.onResume();
+        instance = this;
 
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        instance = null;
+    }
+
+    class SensorServiceReceiver extends BroadcastReceiver
+    {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+
+        }
     }
 }

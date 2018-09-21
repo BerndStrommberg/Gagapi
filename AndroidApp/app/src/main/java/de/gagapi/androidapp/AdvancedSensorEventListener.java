@@ -26,7 +26,6 @@ class AdvancedSensorEventListener implements SensorEventListener
         sensorSampleProcessor = new SensorSampleProcessor();
     }
 
-
     public AdvancedSensorEventListener(String title, GraphView graph, Filter filterX, Filter filterY, Filter filterZ)
     {
         this.graph = graph;
@@ -61,7 +60,6 @@ class AdvancedSensorEventListener implements SensorEventListener
             medianJerk.setColor(Color.YELLOW);
             graph.addSeries(medianJerk);
         }
-
     }
 
     GraphView graph = null;

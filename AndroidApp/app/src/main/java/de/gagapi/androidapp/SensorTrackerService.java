@@ -13,9 +13,7 @@ import android.hardware.Sensor;
 import android.hardware.SensorManager;
 import android.os.Handler;
 import android.os.IBinder;
-import android.support.v4.app.NotificationCompat;
 import android.widget.RemoteViews;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.android.volley.Request;
@@ -39,6 +37,7 @@ public class SensorTrackerService extends Service {
         return null;
     }
 
+    public static SensorTrackerService Instance;
     final String SERVER_IP_PREF = "serverIP";
     Handler handler;
     SharedPreferences userPref;
@@ -48,7 +47,7 @@ public class SensorTrackerService extends Service {
     private Sensor sensorGyro, sensorAcceleration, sensorGravity;
     private AdvancedSensorEventListener gyroListener, accelerationListener, gravityListener;
     Context contex;
-    public int i = 0;
+    public int packagesSent = 0;
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Toast.makeText(this,"Start Service",Toast.LENGTH_SHORT).show();
@@ -93,7 +92,7 @@ public class SensorTrackerService extends Service {
         RegisterSensorListeners();
         handler = new Handler();
 
-
+        requestQueue = Volley.newRequestQueue(this);
         final Runnable r = new Runnable() {
             public void run() {
 
@@ -101,6 +100,12 @@ public class SensorTrackerService extends Service {
                 handler.postDelayed(this, 1250); // wait 1250 ms
                 String serverIP = userPref.getString(SERVER_IP_PREF, "");
                 SendDataToServer(serverIP, GetHTTPRequestData());
+                packagesSent++;
+                if(MainActivity.instance != null)
+                {
+                    MainActivity.instance.SetDebugLabel("sent packages: " + packagesSent);
+                }
+
              //   Toast.makeText(contex, "Tick " + i, Toast.LENGTH_SHORT).show();
               //  i++;
             }
@@ -196,14 +201,14 @@ public class SensorTrackerService extends Service {
 
 
     }
-
+    RequestQueue requestQueue;
     void SendDataToServer(String Adress, String Data)
     {
         //final TextView mTextView = (TextView) findViewById(R.id.debugRequestResponse);
 // ...
 
 // Instantiate the RequestQueue.
-        RequestQueue queue = Volley.newRequestQueue(this);
+
         String url = "http://" + Adress + "/?action=evaluate&data=" + Data; // + ID
 
 // Request a string response from the provided URL.
@@ -223,7 +228,7 @@ public class SensorTrackerService extends Service {
         });
 
 // Add the request to the RequestQueue.
-        queue.add(stringRequest);
+        requestQueue.add(stringRequest);
     }
 
 
@@ -237,7 +242,7 @@ public class SensorTrackerService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
-
+        Toast.makeText(this,"Service ended",Toast.LENGTH_SHORT).show();
         stopForeground(true);
     }
 }
