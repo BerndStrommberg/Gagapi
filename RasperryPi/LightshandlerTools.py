@@ -2,9 +2,9 @@ import requests
 import json
 
 def get_current_state(ip, port):
-    url = "http://"+ip+":"+port+"/?action=present&data=none"
+    url = "http://"+ip+":"+port+"/evaluate"
     print(url)
-    r = requests.get(url)
+    r = requests.post(url)
     
     return r.text
 
@@ -31,7 +31,13 @@ def change_light(activity):
         "hue": color,
         "transitiontime": 50
     }
-
     
-    r = requests.put(url, data=data)
-    print(r.status_code)
+    payload = json.dumps(data)
+    print(payload)
+    
+    
+    try:
+        r = requests.put(url, data=payload)
+        print(r.status_code)
+    except:
+        print("There was a connection error")
