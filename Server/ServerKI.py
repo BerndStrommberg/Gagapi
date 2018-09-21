@@ -35,6 +35,7 @@ status = 2
 def write_data_to_file(path, data):
     file = open(path, "a")
     file.write(data)
+    file.write("\n")
     file.close()
     
 def average(activity_list):
@@ -45,7 +46,7 @@ def update_activity_stack(data):
     activity_stack.pop()
     global status
     status = average(activity_stack)
-    print("Status", status)
+
 
 
 
@@ -66,14 +67,16 @@ class S(BaseHTTPRequestHandler):
             if (action == "evaluate"):
                 data = arguments[1].split("=")[1]
                 input = np.fromstring(data, dtype = float, sep=",")
-
                 realInput = input.reshape((1,20))
-                        
                 output = model.predict(realInput)
                 activity = labels[np.argmax(output) + 1]
-                print("Activity" , activity)
                 update_activity_stack(np.argmax(output) + 1)
-
+             
+                
+                write_data_to_file("stayinghosentasche2.csv", data)
+                
+                self._set_response()
+                self.wfile.write(json.dumps('{"predicted":true}').encode())
             
             elif (action == "present"):
                 print("Action: Present")
