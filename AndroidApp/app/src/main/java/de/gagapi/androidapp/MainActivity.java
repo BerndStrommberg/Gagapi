@@ -42,9 +42,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        Intent startIntent = new Intent(MainActivity.this, SensorTrackerService.class);
 
-        startService(startIntent);
         // read settings
         userPref = getSharedPreferences("pref", 0);
         userPrefEditor = userPref.edit();
@@ -52,7 +50,7 @@ public class MainActivity extends AppCompatActivity {
         serverIP = (TextView) findViewById(R.id.serverAdress);
         serverIP.setText(userPref.getString(SERVER_IP_PREF, ""));
 
-    debugTV = findViewById(R.id.debugRequestResponse);
+        debugTV = findViewById(R.id.debugRequestResponse);
         serverIP.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -118,6 +116,10 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         instance = this;
+        Intent startIntent = new Intent(this, SensorTrackerService.class);
+        startIntent.setAction("start");
+
+        startService(startIntent);
 
     }
 

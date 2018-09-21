@@ -13,6 +13,10 @@ import android.hardware.Sensor;
 import android.hardware.SensorManager;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.PowerManager;
+import android.support.v4.media.app.NotificationCompat;
+import android.text.style.ForegroundColorSpan;
+import android.util.Log;
 import android.widget.RemoteViews;
 import android.widget.Toast;
 
@@ -48,40 +52,72 @@ public class SensorTrackerService extends Service {
     private AdvancedSensorEventListener gyroListener, accelerationListener, gravityListener;
     Context contex;
     public int packagesSent = 0;
+    boolean isRunning = false;
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Toast.makeText(this,"Start Service",Toast.LENGTH_SHORT).show();
+        Instance = this;
+        Toast.makeText(this,"Intent: " + intent.getAction(),Toast.LENGTH_SHORT).show();
 
-        Intent notificationIntent = new Intent(this, MainActivity.class);
-        notificationIntent.setAction(MainActivity.MAIN_ACTION);
-        notificationIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
-                | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0,
-                notificationIntent, 0);
 
-        RemoteViews notificationView = new RemoteViews(this.getPackageName(),R.layout.notification);
+        Log.d("Service", "" + intent.getAction());
+        if(intent != null && intent.getAction() != null)
+        {
+            switch (intent.getAction())
+            {
+                case "start":
+                    StartService();
 
-        Intent buttonCloseIntent = new Intent(this, NotificationCloseButtonHandler.class);
-        buttonCloseIntent.putExtra("action", "close");
+                    break;
+                case "close":
+                    stopForeground(true);
+                    stopSelf();
+                    isRunning = false;
+                    if(wakeLock != null)
+                    {
+                        wakeLock.release();
+                    }
+                    break;
+            }
+        }
 
-        PendingIntent buttonClosePendingIntent = pendingIntent.getBroadcast(this, 0, buttonCloseIntent,0);
-        notificationView.setOnClickPendingIntent(R.id.notification_button_close, buttonClosePendingIntent);
+
+        return START_STICKY;
+    }
+    final int SampleRate = 20000; //in microseconds
+
+    Runnable r;
+    PowerManager.WakeLock wakeLock;
+    void StartService()
+    {
+        PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
+        PowerManager.WakeLock wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,
+                "MyApp::MyWakelockTag");
+        wakeLock.acquire();
+
+        Intent buttonCloseIntent = new Intent(this, SensorTrackerService.class);
+        buttonCloseIntent.setAction("close");
+
+        PendingIntent buttonClosePendingIntent = PendingIntent.getService(this, 0, buttonCloseIntent, 0);
 
         Bitmap icon = BitmapFactory.decodeResource(getResources(),
                 R.mipmap.ic_launcher);
 
         Notification notification = new Notification.Builder(this)
                 .setContentTitle("Test")
-                .setTicker("Test")
-                .setContentText("Test")
+                .setTicker("Sende Bewegungsdaten...")
+                .setContentText("Tippe zum beenden.")
+                .setPriority(Notification.PRIORITY_HIGH)
+                .setContentIntent(buttonClosePendingIntent)
                 .setSmallIcon(R.mipmap.ic_launcher)
                 .setLargeIcon(
                         Bitmap.createScaledBitmap(icon, 128, 128, false))
-                .setContent(notificationView)
-                .setOngoing(true).build();
+                //.setContent(notificationView)
+                .setOngoing(true)
+                //.addAction(android.R.drawable.ic_menu_close_clear_cancel, "stop",
+               //         buttonClosePendingIntent)
+                .build();
 
-        startForeground(101,
-                notification);
+        startForeground(101,  notification);
 
         contex = this;
         // read settings
@@ -93,11 +129,11 @@ public class SensorTrackerService extends Service {
         handler = new Handler();
 
         requestQueue = Volley.newRequestQueue(this);
-        final Runnable r = new Runnable() {
+         r = new Runnable() {
             public void run() {
 
                 //gravTextView.setText(gravityListener.getSensorSampleProcessor().valueMean.toString()); // set raw value from gravity sensor, not really important
-                handler.postDelayed(this, 1250); // wait 1250 ms
+
                 String serverIP = userPref.getString(SERVER_IP_PREF, "");
                 SendDataToServer(serverIP, GetHTTPRequestData());
                 packagesSent++;
@@ -106,20 +142,25 @@ public class SensorTrackerService extends Service {
                     MainActivity.instance.SetDebugLabel("sent packages: " + packagesSent);
                 }
 
-             //   Toast.makeText(contex, "Tick " + i, Toast.LENGTH_SHORT).show();
-              //  i++;
+                if(isRunning)
+                {
+                    handler.postDelayed(this, 1250); // wait 1250 ms
+                }
+                else
+                {
+                    packagesSent = 0;
+                }
+
+
+                //   Toast.makeText(contex, "Tick " + i, Toast.LENGTH_SHORT).show();
+                //  i++;
             }
         };
 
         handler.postDelayed(r, 1);
 
-        return START_STICKY;
+        isRunning = true;
     }
-
-
-
-    final int SampleRate = 20000; //in microseconds
-
     /**
      * Registers the sensor listeners, aka start them
      */
@@ -231,13 +272,6 @@ public class SensorTrackerService extends Service {
         requestQueue.add(stringRequest);
     }
 
-
-    public static class NotificationCloseButtonHandler extends BroadcastReceiver {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            Toast.makeText(context,"Close Clicked",Toast.LENGTH_SHORT).show();
-        }
-    }
 
     @Override
     public void onDestroy() {
