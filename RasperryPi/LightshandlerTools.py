@@ -1,18 +1,20 @@
 import requests
-
+import json
 
 def get_current_state(ip, port):
-    r = request("http://" + ip + ":" + port +"/?action=present&data=none")
+    url = "http://"+ip+":"+port+"/?action=present&data=none"
+    print(url)
+    r = requests.get(url)
     
     return r.text
 
 
 def change_light(activity):
-    red = 5463738
-    green = 82891289
-    blue = 637623
+    red = 60872
+    green = 25600
+    blue = 47104
     color = 0
-    url = "pups"
+    url = "http://192.168.0.135:80/api/5686F1931E/lights/1/state"
     if activity == 1:
         # sitzen
     	color = blue
@@ -22,12 +24,14 @@ def change_light(activity):
     elif activity == 3:
         # laufen
         color = green
-
+    
+    print(color)
     data = {
         "on": True,
-        "bri": 180,
         "hue": color,
-        "sat": 255,
-        "transitiontime": 10
+        "transitiontime": 50
     }
-    r = request(url, data = data)
+
+    
+    r = requests.put(url, data=data)
+    print(r.status_code)
