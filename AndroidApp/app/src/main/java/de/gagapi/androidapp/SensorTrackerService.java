@@ -24,8 +24,13 @@ import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
+import com.android.volley.VolleyLog;
+import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 public class SensorTrackerService extends Service {
 
@@ -246,30 +251,32 @@ public class SensorTrackerService extends Service {
     void SendDataToServer(String Adress, String Data)
     {
         //final TextView mTextView = (TextView) findViewById(R.id.debugRequestResponse);
-// ...
+        JSONObject body = new JSONObject();
+        try {
+            body.put("data", Data);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        String url = "http://" + Adress + "/action"; // + ID
 
-// Instantiate the RequestQueue.
-
-        String url = "http://" + Adress + "/?action=evaluate&data=" + Data; // + ID
-
-// Request a string response from the provided URL.
-        StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
-                new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-                        // Display the first 500 characters of the response string.
-                       // mTextView.setText("Response is: "+ response.substring(0,500));
-                    }
-                }, new Response.ErrorListener() {
+        Log.v("RequestBuilder", "url: " + url);
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(url, body,  new Response.Listener<JSONObject>() {
+            @Override
+            public void onResponse(JSONObject response) {
+                try {
+                    VolleyLog.v("Response:%n %s", response.toString(4));
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
-
-              //  mTextView.setText(error.getMessage());
+                VolleyLog.e("Error: ", error.getMessage());
             }
         });
 
-// Add the request to the RequestQueue.
-        requestQueue.add(stringRequest);
+        requestQueue.add(jsonObjectRequest);
     }
 
 
