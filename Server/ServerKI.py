@@ -27,8 +27,8 @@ labels = {
 }
 
 
-activity_stack = [2 for _ in range(10)]
-status = 2
+activity_stack = [3 for _ in range(10)]
+status = 3
 
 
 
@@ -71,9 +71,9 @@ class S(BaseHTTPRequestHandler):
                 output = model.predict(realInput)
                 activity = labels[np.argmax(output) + 1]
                 update_activity_stack(np.argmax(output) + 1)
-             
-                
-                write_data_to_file("stayinghosentasche2.csv", data)
+                print(activity)
+                print("STATUS: ", status)
+                #write_data_to_file("stayinghosentasche2.csv", data)
                 
                 self._set_response()
                 self.wfile.write(json.dumps('{"predicted":true}').encode())
@@ -81,9 +81,11 @@ class S(BaseHTTPRequestHandler):
             elif (action == "present"):
                 print("Action: Present")
                 print("Status for sending ", status)
+
+                send_status = int(status)
                 json_res = {
                     "activity_num" : status,
-                    "activity_label" : labels[status]   
+                    "activity_label" : labels[send_status]   
                 }
 
                 print(json_res)
