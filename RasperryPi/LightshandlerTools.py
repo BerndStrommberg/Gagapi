@@ -8,7 +8,6 @@ def get_current_state(ip, port):
     
     return r.text
 
-
 def change_light(activity):
     red = 60872
     green = 25600
@@ -34,7 +33,6 @@ def change_light(activity):
     
     payload = json.dumps(data)
     print(payload)
-    
     
     try:
         r = requests.put(url, data=payload)

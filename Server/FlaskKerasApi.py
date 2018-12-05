@@ -45,6 +45,7 @@ def predict():
         string_data = data.decode("utf8").replace("'", '"')
         data_json = json.loads(string_data)
         data_values = data_json['data']
+        print(data_values)
 
         
         input = np.fromstring(data_values, dtype = float, sep=",")
