@@ -114,8 +114,7 @@ public class SensorTrackerService extends Service {
                 .setPriority(Notification.PRIORITY_HIGH)
                 .setContentIntent(buttonClosePendingIntent)
                 .setSmallIcon(R.mipmap.ic_launcher)
-                .setLargeIcon(
-                        Bitmap.createScaledBitmap(icon, 128, 128, false))
+                //.setLargeIcon(Bitmap.createScaledBitmap(icon, 128, 128, false))
                 //.setContent(notificationView)
                 .setOngoing(true)
                 //.addAction(android.R.drawable.ic_menu_close_clear_cancel, "stop",
